@@ -2,6 +2,12 @@
 #include "stdafx.h"
 #include <map>
 #include <string>
+#include <stdio.h>
+#include <stdlib.h>
+#include <cstring>
+#include <string.h>
+
+#define    NUMS    13
 
 using namespace std;
 static map<char, short> roman_dict = {
@@ -82,3 +88,22 @@ bool convert_roman_to_arabic(const char* roman_num, short *arabic)
 	*arabic = sum;
 	return true;
 }
+
+bool convert_arabic_to_roman(unsigned int arabic_number, char* roman_num)
+{
+  if (arabic_number < 0)
+    return false;
+  unsigned int a_num[NUMS] = {1,4,5,9,10,40,50,90,100,400,500,900,1000};
+  char* r_str[NUMS] = {"I","IV","V","IX","X","XL","L","XC","C","CD","D","CM","M"};
+  int counter = NUMS;
+  roman_num = "\0";
+  while (counter--)
+  {
+    while (arabic_number >= a_num[counter]) {
+      arabic_number -= a_num[counter];
+      strcat(roman_num, r_str[counter]);
+    }
+  }
+  return true;
+}
+
