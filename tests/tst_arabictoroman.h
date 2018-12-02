@@ -1,43 +1,74 @@
 #pragma once
 #include "tst.h"
+#include <string>
 
+using namespace std;
 
-TEST(TestRomanToArabic, SimleTest1) {
-    short retArabicNum = 0;
-    bool ret = convert_roman_to_arabic("XI", &retArabicNum);
-    short correctArabicNum = 11;
-    EXPECT_EQ(retArabicNum, correctArabicNum);
+TEST(TestArabicToRoman, SimpleTest1) {
+    char* retRomanNum = new char[256];
+    bool ret = convert_arabic_to_roman(11, retRomanNum);
+    string correctRomanNum = "XI";
+    EXPECT_EQ(string(retRomanNum), correctRomanNum);
     EXPECT_TRUE(ret);
 }
-TEST(TestRomanToArabic, SimleTest2) {
-    short retArabicNum = 0;
-    bool ret = convert_roman_to_arabic("MCLI", &retArabicNum);
-    short correctArabicNum = 1151;
-    EXPECT_EQ(retArabicNum, correctArabicNum);
+TEST(TestArabicToRoman, SimpleTest2) {
+    char* retRomanNum = new char[256];
+    bool ret = convert_arabic_to_roman(1151, retRomanNum);
+    string correctRomanNum = "MCLI";
+    EXPECT_EQ(string(retRomanNum), correctRomanNum);
     EXPECT_TRUE(ret);
 }
-TEST(TestRomanToArabic, SimleTest3) {
-    short retArabicNum = 0;
-    bool ret = convert_roman_to_arabic("MMXVIII", &retArabicNum);
-    short correctArabicNum = 2018;
-    EXPECT_EQ(retArabicNum, correctArabicNum);
+TEST(TestArabicToRoman, SimpleTest3) {
+    char* retRomanNum = new char[256];
+    bool ret = convert_arabic_to_roman(2018, retRomanNum);
+    string correctRomanNum = "MMXVIII";
+    EXPECT_EQ(string(retRomanNum), correctRomanNum);
     EXPECT_TRUE(ret);
 }
-TEST(TestRomanToArabic, ErrorTest1) {
+TEST(TestArabicToRoman, SimpleTest4) {
+    char* retRomanNum = new char[256];
+    bool ret = convert_arabic_to_roman(2999, retRomanNum);
+    string correctRomanNum = "MMCMXCIX";
+    EXPECT_EQ(string(retRomanNum), correctRomanNum);
+    EXPECT_TRUE(ret);
+}
+TEST(TestArabicToRoman, SimpleTest5) {
+    char* retRomanNum = new char[256];
+    bool ret = convert_arabic_to_roman(0, retRomanNum);
+    string correctRomanNum = "";
+    EXPECT_EQ(string(retRomanNum), correctRomanNum);
+    EXPECT_TRUE(ret);
+}
+TEST(TestArabicToRoman, SimpleTest6) {
+    char* retRomanNum = new char[256];
+    bool ret = convert_arabic_to_roman(9, retRomanNum);
+    string correctRomanNum = "IX";
+    EXPECT_EQ(string(retRomanNum), correctRomanNum);
+    EXPECT_TRUE(ret);
+}
+TEST(TestArabicToRoman, SimpleTest7) {
+    char* retRomanNum = new char[256];
+    bool ret = convert_arabic_to_roman(1001, retRomanNum);
+    string correctRomanNum = "MI";
+    EXPECT_EQ(string(retRomanNum), correctRomanNum);
+    EXPECT_TRUE(ret);
+}/*
+TEST(TestArabicToRoman, ErrorTest1) {
     short retArabicNum = 0;
     bool ret = convert_roman_to_arabic("", &retArabicNum);
     EXPECT_EQ(retArabicNum, 0);
     EXPECT_FALSE(ret);
 }
-TEST(TestRomanToArabic, ErrorTest2) {
+TEST(TestArabicToRoman, ErrorTest2) {
     short retArabicNum = 0;
     bool ret = convert_roman_to_arabic("-", &retArabicNum);
     EXPECT_EQ(retArabicNum, 0);
     EXPECT_FALSE(ret);
 }
-TEST(TestRomanToArabic, ErrorTest3) {
+TEST(TestArabicToRoman, ErrorTest3) {
     short retArabicNum = 0;
     bool ret = convert_roman_to_arabic("Q", &retArabicNum);
     EXPECT_EQ(retArabicNum, 0);
     EXPECT_FALSE(ret);
 }
+*/
