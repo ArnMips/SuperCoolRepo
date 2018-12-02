@@ -80,7 +80,7 @@ bool convert_roman_to_arabic(const char* roman_num, short *arabic)
 		}
 	}
 	///
-	if(roman_n == 1) {
+    if(roman_n%2 == 1) {
 		sum += roman_dict[roman_number.at(0)];
 	}
 	///
