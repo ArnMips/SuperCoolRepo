@@ -1,5 +1,5 @@
 #include "artoConverter.h"
-#include "stdafx.h"
+//#include "stdafx.h"
 #include <map>
 #include <string>
 #include <stdio.h>
