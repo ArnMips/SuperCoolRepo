@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <cstring>
 #include <string.h>
+#include <fstream>
+#include <vector>
 
 #define    NUMS    13
 
@@ -106,3 +108,59 @@ bool convert_arabic_to_roman(unsigned int arabic_number, char* roman_num)
   return true;
 }
 
+
+bool convert_asciidigit_to_arabic(const char *filename, char &roman_num)
+{
+    ofstream fin(filename);
+    if (!fin.is_open()){
+        return false;
+    }
+    ifstream fout("res.txt");
+
+    vector<string> digitLine;
+    while (fin.eof()){
+        string line;
+        for (int i = 0; i < 4; ++i) {
+            string tmp;
+            fin >> tmp;
+            line += tmp;
+        }
+        string digits;
+        const int N = line.size() / 3;
+        for (int i = 0; i < N; ++i) {
+            short digit;
+            convert_asciidigit_to_arabic_part(line.c_str(), N, &digit);
+            digits += to_string(digit);
+        }
+        fout << digits << endl;
+    }
+
+    convert_asciidigit_to_arabic_part(filename, )
+}
+
+bool convert_asciidigit_to_arabic_part(const char *ascii, unsigned int stride, short roman_num)
+{
+    static const map<string, short> dict = {
+        {" _ | ||_|", 0},
+        {"     |  |", 1},
+        {" _  _||_ ", 2},
+        {" _  _| _|", 3},
+        {"   |_|  |", 4},
+        {" _ |_  _|", 5},
+        {" _ |_ |_|", 6},
+        {" _   |  |", 7},
+        {" _ |_||_|", 8},
+        {" _ |_| _|", 9}
+    };
+
+    std::string digit;
+
+
+    for (int i = 0; i < 3; i++){
+        for (int j = 0; j < 3; ++j){
+            digit += ascii[i * stride + j];
+        }
+    }
+
+    roman_num = dict.at(digit);
+}
