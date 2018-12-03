@@ -7,6 +7,8 @@
 #include <string.h>
 #include <fstream>
 #include <vector>
+#include <iostream>
+
 
 #define    NUMS    13
 
@@ -109,36 +111,9 @@ bool convert_arabic_to_roman(unsigned int arabic_number, char* roman_num)
 }
 
 
-bool convert_asciidigit_to_arabic(const char *filename, char &roman_num)
-{
-    ofstream fin(filename);
-    if (!fin.is_open()){
-        return false;
-    }
-    ifstream fout("res.txt");
 
-    vector<string> digitLine;
-    while (fin.eof()){
-        string line;
-        for (int i = 0; i < 4; ++i) {
-            string tmp;
-            fin >> tmp;
-            line += tmp;
-        }
-        string digits;
-        const int N = line.size() / 3;
-        for (int i = 0; i < N; ++i) {
-            short digit;
-            convert_asciidigit_to_arabic_part(line.c_str(), N, &digit);
-            digits += to_string(digit);
-        }
-        fout << digits << endl;
-    }
 
-    convert_asciidigit_to_arabic_part(filename, )
-}
-
-bool convert_asciidigit_to_arabic_part(const char *ascii, unsigned int stride, short roman_num)
+bool convert_asciidigit_to_arabic_part(const char *ascii, unsigned int stride, short &roman_num)
 {
     static const map<string, short> dict = {
         {" _ | ||_|", 0},
@@ -158,9 +133,44 @@ bool convert_asciidigit_to_arabic_part(const char *ascii, unsigned int stride, s
 
     for (int i = 0; i < 3; i++){
         for (int j = 0; j < 3; ++j){
+            int x = i * stride + j;
             digit += ascii[i * stride + j];
         }
     }
 
     roman_num = dict.at(digit);
+}
+
+void clearN (char* input, int &length)
+{
+    char *a=input, *b=input;
+    for(; *b=*a; ++a){
+        if(*b!='\n') {
+            ++b;
+        }
+    }
+    puts(input);
+}
+
+bool convert_asciidigit_to_arabic(istream &input, ostream &output)
+{
+    vector<string> digitLine;
+    input.seekg (0, ios::end);
+    int length = input.tellg();
+    input.seekg (0, ios::beg);
+    char *buffer = new char [length];
+
+    input.read (buffer,length);
+    puts(buffer);
+    clearN(buffer, length);
+    string digits = "";
+    int x = strlen(buffer);
+    const int N = strlen(buffer) / 4 - 1;
+    for (int i = 0; i < N; i+=3) {
+        short digit;
+        convert_asciidigit_to_arabic_part(&buffer[i], 6, digit);
+        digits += to_string(digit);
+    }
+    output << digits << endl;
+
 }
