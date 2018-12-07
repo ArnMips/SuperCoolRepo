@@ -8,8 +8,8 @@
 #include <fstream>
 #include <vector>
 #include <iostream>
-
-
+#include <sstream>
+#include <array>
 #define    NUMS    13
 
 using namespace std;
@@ -24,8 +24,9 @@ static map<char, short> roman_dict = {
 		{'Z', 2000},
 };
 
-bool has_in_the_dict(map<char, short> dict, char arabic_letter) {
-	if (dict.find(arabic_letter) == dict.end()) {
+template<class K, class V>
+bool has_in_the_dict(const map<K, V>& dict, K value) {
+    if (dict.find(value) == dict.end()) {
 		return false;
 	}
 	return true;
@@ -37,14 +38,14 @@ bool is_correct_roman_number(std::string roman_number)
 	const auto MAX_REPEATABLY_NUM = 3;
 	///
 	const auto first_symbol = roman_number.at(0);
-	if (!has_in_the_dict(roman_dict, first_symbol)) {
+    if (!has_in_the_dict<char,short>(roman_dict, first_symbol)) {
 		return false;
 	}
 	///
 	for (auto i = 0; i < roman_number.size() - 1; ++i) {
 		const auto current_symbol = roman_number.at(i);
 		const auto next_symbol = roman_number.at(i + 1);
-		if (!has_in_the_dict(roman_dict, next_symbol)) {
+        if (!has_in_the_dict<char, short>(roman_dict, next_symbol)) {
 			return false;
 		} else 	if (current_symbol == next_symbol)	{
 			++counter;
@@ -111,66 +112,76 @@ bool convert_arabic_to_roman(unsigned int arabic_number, char* roman_num)
 }
 
 
-
-
-bool convert_asciidigit_to_arabic_part(const char *ascii, unsigned int stride, short &roman_num)
+int convert_asciidigit_to_arabic(istream &input, ostream &output)
 {
     static const map<string, short> dict = {
-        {" _ | ||_|", 0},
-        {"     |  |", 1},
-        {" _  _||_ ", 2},
-        {" _  _| _|", 3},
-        {"   |_|  |", 4},
-        {" _ |_  _|", 5},
-        {" _ |_ |_|", 6},
-        {" _   |  |", 7},
-        {" _ |_||_|", 8},
-        {" _ |_| _|", 9}
+        {" _ "
+         "| |"
+         "|_|"
+         "   ", 0},
+        {"   "
+         "  |"
+         "  |"
+         "   ", 1},
+        {" _ "
+         " _|"
+         "|_ "
+         "   ", 2},
+        {" _ "
+         " _|"
+         " _|"
+         "   ", 3},
+        {"   "
+         "|_|"
+         "  |"
+         "   ", 4},
+        {" _ "
+         "|_ "
+         " _|"
+         "   ", 5},
+        {" _ "
+         "|_ "
+         "|_|"
+         "   ", 6},
+        {" _ "
+         "  |"
+         "  |"
+         "   ", 7},
+        {" _ "
+         "|_|"
+         "|_|"
+         "   ", 8},
+        {" _ "
+         "|_|"
+         " _|"
+         "   ", 9}
     };
+    static const size_t DIGIT_W = 3;
+    static const size_t DIGIT_H = 4;
+    static const size_t DIGIT_N_MAX = 9;
+    static const size_t LINE_MAX_N = DIGIT_N_MAX * DIGIT_W;
 
-    std::string digit;
+    while(!input.eof()){
+        array<string,DIGIT_N_MAX> line_digits;
+        string line;
+        for (size_t j = 0; j < DIGIT_H; ++j) {
+            std::getline(input, line);
+            if (input.eof() ||
+                line.size() > LINE_MAX_N ||
+                line.size() <= 0 ||
+                line.size() % DIGIT_W != 0) return false;
 
-
-    for (int i = 0; i < 3; i++){
-        for (int j = 0; j < 3; ++j){
-            int x = i * stride + j;
-            digit += ascii[i * stride + j];
+            const size_t DIGIT_N = line.size() / DIGIT_W;
+            for (size_t i = 0; i < DIGIT_N; ++i) {
+                line_digits[i] += line.substr(i*DIGIT_W, DIGIT_W);
+            }
         }
-    }
-
-    roman_num = dict.at(digit);
-}
-
-void clearN (char* input, int &length)
-{
-    char *a=input, *b=input;
-    for(; *b=*a; ++a){
-        if(*b!='\n') {
-            ++b;
+        for(const auto& digit : line_digits){
+            if (digit.empty()) continue;
+            if (!has_in_the_dict<string, short>(dict, digit)) return false;
+            output << dict.at(digit);
         }
+        output << endl;
     }
-    puts(input);
-}
-
-bool convert_asciidigit_to_arabic(istream &input, ostream &output)
-{
-    vector<string> digitLine;
-    input.seekg (0, ios::end);
-    int length = input.tellg();
-    input.seekg (0, ios::beg);
-    char *buffer = new char [length];
-
-    input.read (buffer,length);
-    puts(buffer);
-    clearN(buffer, length);
-    string digits = "";
-    int x = strlen(buffer);
-    const int N = strlen(buffer) / 4 - 1;
-    for (int i = 0; i < N; i+=3) {
-        short digit;
-        convert_asciidigit_to_arabic_part(&buffer[i], 6, digit);
-        digits += to_string(digit);
-    }
-    output << digits << endl;
-
+    return true;
 }

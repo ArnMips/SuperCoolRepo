@@ -2,7 +2,7 @@
 #include "streamHelper.h"
 
 #include <QCommandLineParser>
-
+#include <QDebug>
 
 int main(int argc, char *argv[]) {
 
@@ -18,7 +18,7 @@ int main(int argc, char *argv[]) {
 
     auto istr = createStream<std::istream>(inputFile);
     auto ostr = createStream<std::ostream>(outputFile);
-    convert_asciidigit_to_arabic(*istr, *ostr);
+    bool res = convert_asciidigit_to_arabic(*istr, *ostr);
 
     return 0;
 }
