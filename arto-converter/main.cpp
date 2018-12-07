@@ -1,13 +1,24 @@
 #include "artoConverter.h"
-#include <iostream>
-#include <fstream>
+#include "streamHelper.h"
+
+#include <QCommandLineParser>
+
 
 int main(int argc, char *argv[]) {
-    short arabic = 0;
-    //std::ifstream fin("/Users/ilkin_galoev/Documents/file.txt");
-    std::ifstream is;
-    is.open ("/Users/ilkin_galoev/Documents/file.txt");
-    convert_asciidigit_to_arabic(is, std::cout);
-    std::cout << arabic;
+
+    QCoreApplication app(argc, argv);
+    QCommandLineParser parser;
+    QCommandLineOption inputOpt("i", "Input file name", "filePath");
+    QCommandLineOption outputOpt("o", "Output file name", "filePath");
+    parser.addOption(inputOpt);
+    parser.addOption(outputOpt);
+    parser.process(app);
+    std::string inputFile = parser.value(inputOpt).toStdString();
+    std::string outputFile = parser.value(outputOpt).toStdString();
+
+    auto istr = createStream<std::istream>(inputFile);
+    auto ostr = createStream<std::ostream>(outputFile);
+    convert_asciidigit_to_arabic(*istr, *ostr);
+
     return 0;
 }
