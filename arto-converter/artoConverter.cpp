@@ -112,6 +112,16 @@ bool convert_arabic_to_roman(unsigned int arabic_number, char* roman_num)
   return true;
 }
 
+bool calculate_checksum(vector<int> code)
+{
+    const int codeSize = code.size();
+    int checksum = 0;
+    for (int i = 0; i<codeSize; i++){
+        checksum += (codeSize - i) * code[i];
+    }
+    return checksum % 11 == 0 ? true : false;
+}
+
 
 int convert_asciidigit_to_arabic(istream &input, ostream &output)
 {
@@ -173,10 +183,30 @@ int convert_asciidigit_to_arabic(istream &input, ostream &output)
         }
         if (++currentLine == DIGIT_H) {
             currentLine = 0;
+            vector<int> code;
+            bool illFlag = false;
             for(const auto& digit : line_digits){
                 if (digit.empty()) continue;
-                if (!has_in_the_dict<string, short>(dict, digit)) return false;
-                output << dict.at(digit);
+                if (!has_in_the_dict<string, short>(dict, digit)) {
+                    code.push_back(-1);
+                    illFlag = true;
+                } else {
+                    code.push_back(dict.at(digit));
+                }
+            }
+            for (int j = 0; j < code.size(); j++){
+                if (code.at(j) == -1){
+                    output<<"?";
+                } else{
+                     output<<code.at(j);
+                }
+            }
+            if (illFlag){
+                output<<" ill";
+            } else {
+                if (!calculate_checksum(code)){
+                    output<<" err";
+                 }
             }
             for_each(line_digits.begin(), line_digits.end(), [](string& s){ s = "" ;});
             output << endl;
