@@ -20,5 +20,6 @@ int main(int argc, char *argv[]) {
     auto ostr = createStream<std::ostream>(outputFile);
     bool res = convert_asciidigit_to_arabic(*istr, *ostr);
 
+    qDebug() << res;
     return 0;
 }

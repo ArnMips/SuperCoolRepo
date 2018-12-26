@@ -10,6 +10,7 @@
 #include <iostream>
 #include <sstream>
 #include <array>
+#include <algorithm>
 #define    NUMS    13
 
 using namespace std;
@@ -158,30 +159,28 @@ int convert_asciidigit_to_arabic(istream &input, ostream &output)
     };
     static const size_t DIGIT_W = 3;
     static const size_t DIGIT_H = 4;
-    static const size_t DIGIT_N_MAX = 9;
-    static const size_t LINE_MAX_N = DIGIT_N_MAX * DIGIT_W;
+    static const size_t DIGIT_N = 9;
+    static const size_t LINE_N = DIGIT_N * DIGIT_W;
 
-    while(!input.eof()){
-        array<string,DIGIT_N_MAX> line_digits;
-        string line;
-        for (size_t j = 0; j < DIGIT_H; ++j) {
-            std::getline(input, line);
-            if (input.eof() ||
-                line.size() > LINE_MAX_N ||
-                line.size() <= 0 ||
-                line.size() % DIGIT_W != 0) return false;
+    int currentLine(0);
+    string line;
+    array<string,DIGIT_N> line_digits;
 
-            const size_t DIGIT_N = line.size() / DIGIT_W;
-            for (size_t i = 0; i < DIGIT_N; ++i) {
-                line_digits[i] += line.substr(i*DIGIT_W, DIGIT_W);
+    while(std::getline(input, line)) {
+        if (input.eof() || line.size() != LINE_N) return false;
+        for (size_t i = 0; i < DIGIT_N; ++i) {
+            line_digits[i] += line.substr(i*DIGIT_W, DIGIT_W);
+        }
+        if (++currentLine == DIGIT_H) {
+            currentLine = 0;
+            for(const auto& digit : line_digits){
+                if (digit.empty()) continue;
+                if (!has_in_the_dict<string, short>(dict, digit)) return false;
+                output << dict.at(digit);
             }
+            for_each(line_digits.begin(), line_digits.end(), [](string& s){ s = "" ;});
+            output << endl;
         }
-        for(const auto& digit : line_digits){
-            if (digit.empty()) continue;
-            if (!has_in_the_dict<string, short>(dict, digit)) return false;
-            output << dict.at(digit);
-        }
-        output << endl;
     }
     return true;
 }
