@@ -52,23 +52,4 @@ TEST(TestArabicToRoman, SimpleTest7) {
     string correctRomanNum = "MI";
     EXPECT_EQ(string(retRomanNum), correctRomanNum);
     EXPECT_TRUE(ret);
-}/*
-TEST(TestArabicToRoman, ErrorTest1) {
-    short retArabicNum = 0;
-    bool ret = convert_roman_to_arabic("", &retArabicNum);
-    EXPECT_EQ(retArabicNum, 0);
-    EXPECT_FALSE(ret);
 }
-TEST(TestArabicToRoman, ErrorTest2) {
-    short retArabicNum = 0;
-    bool ret = convert_roman_to_arabic("-", &retArabicNum);
-    EXPECT_EQ(retArabicNum, 0);
-    EXPECT_FALSE(ret);
-}
-TEST(TestArabicToRoman, ErrorTest3) {
-    short retArabicNum = 0;
-    bool ret = convert_roman_to_arabic("Q", &retArabicNum);
-    EXPECT_EQ(retArabicNum, 0);
-    EXPECT_FALSE(ret);
-}
-*/
