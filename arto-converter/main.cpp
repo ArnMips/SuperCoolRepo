@@ -16,7 +16,7 @@ int main(int argc, char *argv[]) {
     std::string inputFile = parser.value(inputOpt).toStdString();
     std::string outputFile = parser.value(outputOpt).toStdString();
 
-    auto istr = createStream<std::istream>("/Users/ilkin_galoev/Documents/file.txt");
+    auto istr = createStream<std::istream>(inputFile);
     auto ostr = createStream<std::ostream>(outputFile);
     bool res = convert_asciidigit_to_arabic(*istr, *ostr);
 

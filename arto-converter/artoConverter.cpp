@@ -122,6 +122,29 @@ bool calculate_checksum(vector<int> code)
     return checksum % 11 == 0 ? true : false;
 }
 
+bool hasSimular(const string& original, const string& verifiable)
+{
+    if (original.size() != verifiable.size()) return false;
+    bool hasDiff = false;
+    for (size_t i = 0; i < original.size(); ++i) {
+        if(hasDiff) return false;
+        if (original[i] != verifiable[i]) {
+            hasDiff = true;
+        }
+    }
+    return true;
+}
+
+std::vector<string> getSimular(const std::vector<string>& originals, const string& pattern)
+{
+    std::vector<string> simular;
+    for (auto & original : originals) {
+        if(hasSimular(original, pattern)) {
+                simular.push_back(original);
+        }
+    }
+    return simular;
+}
 
 int convert_asciidigit_to_arabic(istream &input, ostream &output)
 {
