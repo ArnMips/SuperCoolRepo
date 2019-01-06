@@ -115,9 +115,9 @@ bool convert_arabic_to_roman(unsigned int arabic_number, char* roman_num)
 ////////////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------------
 
-#define ILL_TERMINATOR       " ill"
-#define AMB_TERMINATOR       " amb"
-#define ERR_TERMINATOR       " err"
+#define ILL_TERMINATOR       "ill"
+#define AMB_TERMINATOR       "amb"
+#define ERR_TERMINATOR       "err"
 #define UNDEF_DIGIT          -1
 #define ILL_SYMBOL           '?'
 #define MAGIC_CHECKSUM_CONST 11
@@ -165,7 +165,7 @@ void printCode(ostream &output, const vector<int>& code)
         output << d;
     });
     if (!calculate_checksum(code)){
-        output << ERR_TERMINATOR;
+        output << " " << ERR_TERMINATOR;
     }
 }
 
@@ -175,7 +175,7 @@ void printIllCode(ostream &output, const vector<int>& code)
         if (d == UNDEF_DIGIT) output << ILL_SYMBOL;
         else output << d;
     });
-    output << ILL_TERMINATOR;
+    output << " " << ILL_TERMINATOR;
 }
 
 void printAmbCode(ostream &output, const vector<int>& code, const vector<int>& predictionCode)
