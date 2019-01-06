@@ -130,7 +130,7 @@ bool calculate_checksum(vector<int> code)
     for (int i = 0; i<codeSize; i++){
         checksum += (codeSize - i) * code[i];
     }
-    return checksum % MAX_CHECK_SUM == 0 ? true : false;
+    return checksum % MAGIC_CHECKSUM_CONST == 0 ? true : false;
 }
 
 bool hasSimular(const string& original, const string& verifiable)
@@ -172,7 +172,7 @@ void printCode(ostream &output, const vector<int>& code)
 void printIllCode(ostream &output, const vector<int>& code)
 {
     for_each(code.begin(), code.end(), [&output](const int& d) {
-        if (d == AMB_DIGIT) output << AMB_SYMBOL;
+        if (d == UNDEF_DIGIT) output << ILL_SYMBOL;
         else output << d;
     });
     output << ILL_TERMINATOR;
@@ -183,7 +183,7 @@ void printAmbCode(ostream &output, const vector<int>& code, const vector<int>& p
     for(auto predictionDigit : predictionCode){
         vector<int> healthyCode;
         for (auto digit : code){
-            auto healthyDigit = (digit == AMB_DIGIT ? predictionDigit : digit);
+            auto healthyDigit = (digit == UNDEF_DIGIT ? predictionDigit : digit);
             healthyCode.push_back(healthyDigit);
         }
         printCode(output, healthyCode);
@@ -267,7 +267,7 @@ int convert_asciidigit_to_arabic(istream &input, ostream &output)
                         isIll = true;
                     }
                     isDigitMissingInDict = true;
-                    code.push_back(AMB_DIGIT);
+                    code.push_back(UNDEF_DIGIT);
                 } else {
                     code.push_back(dict.at(digit)); 
                 }
