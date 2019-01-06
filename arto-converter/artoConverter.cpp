@@ -122,6 +122,11 @@ bool convert_arabic_to_roman(unsigned int arabic_number, char* roman_num)
 #define ILL_SYMBOL           '?'
 #define MAGIC_CHECKSUM_CONST 11
 
+#define DIGIT_W 3
+#define DIGIT_H 4
+#define DIGIT_N 9
+#define LINE_N (DIGIT_N * DIGIT_W)
+
 
 bool calculate_checksum(vector<int> code)
 {
@@ -192,6 +197,19 @@ void printAmbCode(ostream &output, const vector<int>& code, const vector<int>& p
     output << AMB_TERMINATOR;
 }
 
+void putSeparatedLineInArray(array<string,DIGIT_N>& line_digits, const string& line)
+{
+    for (size_t i = 0; i < DIGIT_N; ++i) {
+        line_digits[i] += line.substr(i*DIGIT_W, DIGIT_W);
+    }
+}
+
+void cleanStringArray(array<string,DIGIT_N>& line_digits)
+{
+    for_each(line_digits.begin(), line_digits.end(), [](string& s){ s = "" ;});
+}
+
+
 int convert_asciidigit_to_arabic(istream &input, ostream &output)
 {
     static const map<string, short> dict = {
@@ -236,12 +254,8 @@ int convert_asciidigit_to_arabic(istream &input, ostream &output)
          " _|"
          "   ", 9}
     };
-    vector<string> vdict;          //???
-    for (auto d : dict) vdict.push_back(d.first); //???
-    static const size_t DIGIT_W = 3;
-    static const size_t DIGIT_H = 4;
-    static const size_t DIGIT_N = 9;
-    static const size_t LINE_N = DIGIT_N * DIGIT_W;
+    vector<string> vdict;
+    for (auto d : dict) vdict.push_back(d.first);
     int currentLine(0);
     string line;
     array<string,DIGIT_N> line_digits;
@@ -250,9 +264,8 @@ int convert_asciidigit_to_arabic(istream &input, ostream &output)
 
     while(std::getline(input, line)) {
         if (input.eof() || line.size() != LINE_N) return false;
-        for (size_t i = 0; i < DIGIT_N; ++i) {
-            line_digits[i] += line.substr(i*DIGIT_W, DIGIT_W);
-        }
+
+        putSeparatedLineInArray(line_digits, line);
 
         if (++currentLine == DIGIT_H) {
             currentLine = 0;
@@ -260,8 +273,9 @@ int convert_asciidigit_to_arabic(istream &input, ostream &output)
             vector<int> predictionCode;
             for(const auto& digit : line_digits){
                 if (!has_in_the_dict<string, short>(dict, digit)) {
-                    for(auto predictionDigit: getSimular(vdict, digit)){
-                        predictionCode.push_back(dict.at(predictionDigit));
+                    for(auto predictionDigit : getSimular(vdict, digit)){
+                        int idigit = dict.at(predictionDigit);
+                        predictionCode.push_back(idigit);
                     }
                     if (isDigitMissingInDict || predictionCode.empty()) {
                         isIll = true;
@@ -272,7 +286,6 @@ int convert_asciidigit_to_arabic(istream &input, ostream &output)
                     code.push_back(dict.at(digit)); 
                 }
             }
-
             if (isIll){
                 printIllCode(output, code);
             } else if (predictionCode.empty()){
@@ -282,8 +295,7 @@ int convert_asciidigit_to_arabic(istream &input, ostream &output)
             }
             output << endl;
 
-            /// clean array
-            for_each(line_digits.begin(), line_digits.end(), [](string& s){ s = "" ;});
+            cleanStringArray(line_digits);
             isIll = false;
             isDigitMissingInDict = false;
         }
