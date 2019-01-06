@@ -86,7 +86,7 @@ TEST(TestAsciiToInt, SimpleTest6) {
     auto istr = createStream<std::istream>(pathToFiles+"TestFile6.txt");
     auto ostr = createStream<std::ostream>(pathToFiles+"Result.txt");
     bool ret = convert_asciidigit_to_arabic(*istr, *ostr);
-    string correctCodes[4] = { "320122456 err 320123456 amb\n", "878902459 err 878902439 err amb\n", "546957811\n", "546?5?8?6 ill\n" };
+    string correctCodes[4] = { "320123456 320122456 err amb\n", "878902439 err 878902459 err amb\n", "546957811\n", "546?5?8?6 ill\n" };
     EXPECT_TRUE(ret);
     EXPECT_EQ(readFile(pathToFiles+"Result.txt"), correctCodes[0] + correctCodes[1] + correctCodes[2] + correctCodes[3]);
 }
@@ -94,12 +94,12 @@ TEST(TestAsciiToInt, SimpleTest7) {
     auto istr = createStream<std::istream>(pathToFiles+"TestFile7.txt");
     auto ostr = createStream<std::ostream>(pathToFiles+"Result.txt");
     bool ret = convert_asciidigit_to_arabic(*istr, *ostr);
-    string correctCodes[10] = { "000000001 err amb\n",
+    string correctCodes[10] = { "000000001 err 060000001 err amb\n",
                                 "111111111 err amb\n",
                                 "222222222 err amb\n",
                                 "333333333 err 353333333 err amb\n",
                                 "444444444 err amb\n",
-                                "555555555 err 535555555 err amb\n",
+                                "535555555 err 555555555 err amb\n",
                                 "666666666 err amb\n",
                                 "777777777 err amb\n",
                                 "888888888 err amb\n",
@@ -111,12 +111,12 @@ TEST(TestAsciiToInt, SimpleTest8) {
     auto istr = createStream<std::istream>(pathToFiles+"TestFile8.txt");
     auto ostr = createStream<std::ostream>(pathToFiles+"Result.txt");
     bool ret = convert_asciidigit_to_arabic(*istr, *ostr);
-    string correctCodes[10] = { "000000000 amb\n",
+    string correctCodes[10] = { "000000000 060000000 err amb\n",
                                 "111111110 amb\n",
                                 "2?2222220 ill\n",
                                 "3?33?333? ill\n",
                                 "444444440 amb\n",
-                                "555555550 553555550 err amb\n",
+                                "553555550 err 555555550  amb\n",
                                 "66?66?660 ill\n",
                                 "777777770 amb\n",
                                 "888888880 amb\n",
