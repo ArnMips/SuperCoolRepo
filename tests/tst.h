@@ -6,3 +6,4 @@
 using namespace testing;
 
 #include "../arto-converter/artoConverter.h"
+#include "../arto-converter/streamHelper.h"

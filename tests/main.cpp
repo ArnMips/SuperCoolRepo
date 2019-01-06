@@ -2,6 +2,7 @@
 
 #include "tst_arabictoroman.h"
 #include "tst_romantoarabic.h"
+#include "tst_asciitoint.h"
 
 int main(int argc, char *argv[])
 {
