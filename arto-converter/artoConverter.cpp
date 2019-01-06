@@ -112,6 +112,103 @@ bool convert_arabic_to_roman(unsigned int arabic_number, char* roman_num)
   return true;
 }
 
+////////////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------------
+
+#define ILL_TERMINATOR       "ill"
+#define AMB_TERMINATOR       "amb"
+#define ERR_TERMINATOR       "err"
+#define UNDEF_DIGIT          -1
+#define ILL_SYMBOL           '?'
+#define MAGIC_CHECKSUM_CONST 11
+
+#define DIGIT_W 3
+#define DIGIT_H 4
+#define DIGIT_N 9
+#define LINE_N (DIGIT_N * DIGIT_W)
+
+
+bool calculate_checksum(vector<int> code)
+{
+    const int codeSize = code.size();
+    int checksum = 0;
+    for (int i = 0; i<codeSize; i++){
+        checksum += (codeSize - i) * code[i];
+    }
+    return checksum % MAGIC_CHECKSUM_CONST == 0 ? true : false;
+}
+
+bool hasSimular(const string& original, const string& verifiable)
+{
+    static const char BLANK = ' ';
+    if (original.size() != verifiable.size()) return false;
+    bool hasDiff = false;
+    for (size_t i = 0; i < original.size(); ++i) {
+        if (original[i] != verifiable[i]) {
+            if (verifiable[i] != BLANK) return false;
+            if (hasDiff) return false;
+            hasDiff = true;
+        }
+    }
+    return true;
+}
+
+std::vector<string> getSimular(const std::vector<string>& originals, const string& pattern)
+{
+    std::vector<string> simular;
+    for (auto & original : originals) {
+        if(hasSimular(original, pattern)) {
+            simular.push_back(original);
+        }
+    }
+    return simular;
+}
+
+void printCode(ostream &output, const vector<int>& code)
+{
+    for_each(code.begin(), code.end(), [&output](const int& d) {
+        output << d;
+    });
+    if (!calculate_checksum(code)){
+        output << " " << ERR_TERMINATOR;
+    }
+}
+
+void printIllCode(ostream &output, const vector<int>& code)
+{
+    for_each(code.begin(), code.end(), [&output](const int& d) {
+        if (d == UNDEF_DIGIT) output << ILL_SYMBOL;
+        else output << d;
+    });
+    output << " " << ILL_TERMINATOR;
+}
+
+void printAmbCode(ostream &output, const vector<int>& code, const vector<int>& predictionCode)
+{
+    for(auto predictionDigit : predictionCode){
+        vector<int> healthyCode;
+        for (auto digit : code){
+            auto healthyDigit = (digit == UNDEF_DIGIT ? predictionDigit : digit);
+            healthyCode.push_back(healthyDigit);
+        }
+        printCode(output, healthyCode);
+        output << " ";
+    }
+    output << AMB_TERMINATOR;
+}
+
+void putSeparatedLineInArray(array<string,DIGIT_N>& line_digits, const string& line)
+{
+    for (size_t i = 0; i < DIGIT_N; ++i) {
+        line_digits[i] += line.substr(i*DIGIT_W, DIGIT_W);
+    }
+}
+
+void cleanStringArray(array<string,DIGIT_N>& line_digits)
+{
+    for_each(line_digits.begin(), line_digits.end(), [](string& s){ s = "" ;});
+}
+
 
 int convert_asciidigit_to_arabic(istream &input, ostream &output)
 {
@@ -157,29 +254,50 @@ int convert_asciidigit_to_arabic(istream &input, ostream &output)
          " _|"
          "   ", 9}
     };
-    static const size_t DIGIT_W = 3;
-    static const size_t DIGIT_H = 4;
-    static const size_t DIGIT_N = 9;
-    static const size_t LINE_N = DIGIT_N * DIGIT_W;
-
+    vector<string> vdict;
+    for (auto d : dict) vdict.push_back(d.first);
     int currentLine(0);
     string line;
     array<string,DIGIT_N> line_digits;
+    bool isIll = false;
+    bool isDigitMissingInDict = false;
 
     while(std::getline(input, line)) {
         if (input.eof() || line.size() != LINE_N) return false;
-        for (size_t i = 0; i < DIGIT_N; ++i) {
-            line_digits[i] += line.substr(i*DIGIT_W, DIGIT_W);
-        }
+
+        putSeparatedLineInArray(line_digits, line);
+
         if (++currentLine == DIGIT_H) {
             currentLine = 0;
+            vector<int> code;
+            vector<int> predictionCode;
             for(const auto& digit : line_digits){
-                if (digit.empty()) continue;
-                if (!has_in_the_dict<string, short>(dict, digit)) return false;
-                output << dict.at(digit);
+                if (!has_in_the_dict<string, short>(dict, digit)) {
+                    for(auto predictionDigit : getSimular(vdict, digit)){
+                        int idigit = dict.at(predictionDigit);
+                        predictionCode.push_back(idigit);
+                    }
+                    if (isDigitMissingInDict || predictionCode.empty()) {
+                        isIll = true;
+                    }
+                    isDigitMissingInDict = true;
+                    code.push_back(UNDEF_DIGIT);
+                } else {
+                    code.push_back(dict.at(digit)); 
+                }
             }
-            for_each(line_digits.begin(), line_digits.end(), [](string& s){ s = "" ;});
+            if (isIll){
+                printIllCode(output, code);
+            } else if (predictionCode.empty()){
+                printCode(output, code);
+            } else {
+                printAmbCode(output, code, predictionCode);
+            }
             output << endl;
+
+            cleanStringArray(line_digits);
+            isIll = false;
+            isDigitMissingInDict = false;
         }
     }
     return true;
