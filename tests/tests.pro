@@ -10,7 +10,8 @@ HEADERS += \
     ../arto-converter/artoConverter.h \
     tst_arabictoroman.h \
     tst_romantoarabic.h \
-    tst.h
+    tst.h \
+    tst_asciitoint.h
 
 SOURCES += \
         main.cpp \
