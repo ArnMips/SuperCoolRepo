@@ -115,12 +115,12 @@ bool convert_arabic_to_roman(unsigned int arabic_number, char* roman_num)
 ////////////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------------
 
-#define ILL_TERMINATOR  " ill"
-#define AMB_TERMINATOR  " amb"
-#define ERR_TERMINATOR  " err"
-#define AMB_DIGIT       -1
-#define AMB_SYMBOL      '?'
-#define MAX_CHECK_SUM   11
+#define ILL_TERMINATOR       " ill"
+#define AMB_TERMINATOR       " amb"
+#define ERR_TERMINATOR       " err"
+#define UNDEF_DIGIT          -1
+#define ILL_SYMBOL           '?'
+#define MAGIC_CHECKSUM_CONST 11
 
 
 bool calculate_checksum(vector<int> code)
