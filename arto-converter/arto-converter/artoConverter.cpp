@@ -1,5 +1,5 @@
 #include "artoConverter.h"
-#include "stdafx.h"
+// #include "stdafx.h"
 #include <map>
 #include <string>
 #include <stdio.h>
@@ -7,9 +7,11 @@
 #include <cstring>
 #include <string.h>
 
+// макросы не используются, если есть возможность обойтись без них
 #define    NUMS    13
 
 using namespace std;
+// map явно не будет изменяться во время выполнения
 static map<char, short> roman_dict = {
 		{'I', 1},
 		{'V', 5},
@@ -21,6 +23,9 @@ static map<char, short> roman_dict = {
 		{'Z', 2000},
 };
 
+// Функции не торчащие в интерфейсе тоже нужно покрывать тестами
+// Эта функция достаточно примитивна, а вот is_correct_roman_number лучше покрыть
+// Передача map по значению -- это очень плохо
 bool has_in_the_dict(map<char, short> dict, char arabic_letter) {
 	if (dict.find(arabic_letter) == dict.end()) {
 		return false;
@@ -28,6 +33,8 @@ bool has_in_the_dict(map<char, short> dict, char arabic_letter) {
 	return true;
 }
 
+// На эту ф-цию нужно обязательно писать тесты
+// Строку нужно передавать по ссылке
 bool is_correct_roman_number(std::string roman_number)
 {
 	char counter(0);
@@ -61,7 +68,10 @@ bool convert_roman_to_arabic(const char* roman_num, short *arabic)
 	///
 	if (roman_number.empty()) {
 		return false;
-	} else if (!is_correct_roman_number(roman_number)) {
+	}  // к чему тут else ?
+	// Но глобально подход правильный: в начале функции проверяются предусловия, а
+	// потом полезная нагрузка
+	else if (!is_correct_roman_number(roman_number)) {
 		return false;
 	}
 	///
@@ -85,10 +95,13 @@ bool convert_roman_to_arabic(const char* roman_num, short *arabic)
 		sum += roman_dict[roman_number.at(0)];
 	}
 	///
+	// А если arabic == NULL
 	*arabic = sum;
 	return true;
 }
 
+// Оно не компилится
+// Глядя на код я не верю, что предыдущая функция работает
 bool convert_arabic_to_roman(unsigned int arabic_number, char* roman_num)
 {
   if (arabic_number < 0)

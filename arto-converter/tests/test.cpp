@@ -1,15 +1,17 @@
 #include "pch.h"
 #include "../arto-converter/artoConverter.h"
 
+// Ќадо бы проверить еще некоторые варианты неправильных римских чисел
+// Ќапример, IIV или CIC
 TEST(TestRomanToArabic, SimleTest_1) {
-	short retArabicNum = ;
+	short retArabicNum = 0;
 	bool ret = convert_roman_to_arabic("XI", &retArabicNum);
 	short correctArabicNum = 11;
 	EXPECT_EQ(retArabicNum, correctArabicNum);
 	EXPECT_TRUE(ret);
 }
 TEST(TestRomanToArabic, SimleTest_2) {
-	short retArabicNum = ;
+	short retArabicNum = 0;
 	bool ret = convert_roman_to_arabic("MCLI", &retArabicNum);
 	short correctArabicNum = 1151;
 	EXPECT_EQ(retArabicNum, correctArabicNum);
