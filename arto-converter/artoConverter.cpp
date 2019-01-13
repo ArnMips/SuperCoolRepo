@@ -153,7 +153,9 @@ bool convert_arabic_to_roman(unsigned int arabic_number, char* roman_num)
 #define DIGIT_N 9
 #define LINE_N (DIGIT_N * DIGIT_W)
 
-
+// Тесты нужно писать не только на интерфейсные функции, но и на эти
+// Передавать вектор по значению плохо
+// Название функции не соответствует тому, что она делает
 bool calculate_checksum(vector<int> code)
 {
     const int codeSize = code.size();
@@ -182,6 +184,8 @@ bool hasSimular(const string& original, const string& verifiable)
 std::vector<string> getSimular(const std::vector<string>& originals, const string& pattern)
 {
     std::vector<string> simular;
+    // не нужно реализовывать то, что уже есть в STL
+    // copy_if и std::back_inserter позволяют заменить for на одну строку
     for (auto & original : originals) {
         if(hasSimular(original, pattern)) {
             simular.push_back(original);
@@ -195,6 +199,7 @@ void printCode(ostream &output, const vector<int>& code)
     for_each(code.begin(), code.end(), [&output](const int& d) {
         output << d;
     });
+    // Код с правильной чек-суммой можно получить восстановившись от ошибки
     if (!calculate_checksum(code)){
         output << " " << ERR_TERMINATOR;
     }
@@ -213,6 +218,7 @@ void printAmbCode(ostream &output, const vector<int>& code, const vector<int>& p
 {
     for(auto predictionDigit : predictionCode){
         vector<int> healthyCode;
+        // Вместо цикла лучше использовать replace или replace_if
         for (auto digit : code){
             auto healthyDigit = (digit == UNDEF_DIGIT ? predictionDigit : digit);
             healthyCode.push_back(healthyDigit);
@@ -282,6 +288,7 @@ int convert_asciidigit_to_arabic(istream &input, ostream &output)
     };
     vector<string> vdict;
     for (auto d : dict) vdict.push_back(d.first);
+    // Кажется, что часть этих переменных нужны только в цикле и можно сократить их scope
     int currentLine(0);
     string line;
     array<string,DIGIT_N> line_digits;
@@ -289,6 +296,8 @@ int convert_asciidigit_to_arabic(istream &input, ostream &output)
     bool isDigitMissingInDict = false;
 
     while(std::getline(input, line)) {
+        // странно, что чтение строки неправильной длины прервет все чтение
+        // было бы логично уметь восстанавливаться после таких ошибок
         if (input.eof() || line.size() != LINE_N) return false;
 
         putSeparatedLineInArray(line_digits, line);
@@ -317,6 +326,7 @@ int convert_asciidigit_to_arabic(istream &input, ostream &output)
             } else if (predictionCode.empty()){
                 printCode(output, code);
             } else {
+                // Двусмысленность кода может разрешиться благодаря чек-сумме
                 printAmbCode(output, code, predictionCode);
             }
             output << endl;

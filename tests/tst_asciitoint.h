@@ -13,6 +13,9 @@ string readFile(const string& fileName) {
     return strFile;
 }
 
+// Так делать однозначно не стоит
+// Для тестов самым адекватным вариантом кажется использовать stringstream вместо файловых
+// потоков. Можно же считать, что запись в файл работает
 string pathToFiles = "/Users/ilkin_galoev/Documents/7 semester/Designing of information systems/SuperCoolRepo/tests/";
 
 TEST(TestAsciiToInt, SimpleTest1) {
