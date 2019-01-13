@@ -11,9 +11,12 @@
 #include <sstream>
 #include <array>
 #include <algorithm>
+// Макросы обычно используются, когда нет других альтернатив
+// Здесь и константы достаточно
 #define    NUMS    13
 
 using namespace std;
+// Почему не const?
 static map<char, short> roman_dict = {
 		{'I', 1},
 		{'V', 5},
@@ -25,6 +28,9 @@ static map<char, short> roman_dict = {
 		{'Z', 2000},
 };
 
+// Функция пишется в одну строчку, но это нестрашно
+// А вот то, что она при линковке будет торчать наружу это уже хуже
+// Нужно либо static делать, либо в анонимный namespace помещать
 template<class K, class V>
 bool has_in_the_dict(const map<K, V>& dict, K value) {
     if (dict.find(value) == dict.end()) {
@@ -33,6 +39,11 @@ bool has_in_the_dict(const map<K, V>& dict, K value) {
 	return true;
 }
 
+// Также вопрос по линковке
+// Строку лучше передавать по ссылке
+// Эту функцию обязательно нужно покрывать тестами отдельно
+// Кажется, что эта функция не работает, так как CIC и IIIVL
+// не являются корректными римскими числами
 bool is_correct_roman_number(std::string roman_number)
 {
 	char counter(0);
@@ -46,6 +57,7 @@ bool is_correct_roman_number(std::string roman_number)
 	for (auto i = 0; i < roman_number.size() - 1; ++i) {
 		const auto current_symbol = roman_number.at(i);
 		const auto next_symbol = roman_number.at(i + 1);
+        // Типы-параметры здесь необязательно писать, если правильно описать шаблон
         if (!has_in_the_dict<char, short>(roman_dict, next_symbol)) {
 			return false;
 		} else 	if (current_symbol == next_symbol)	{
@@ -90,18 +102,31 @@ bool convert_roman_to_arabic(const char* roman_num, short *arabic)
 		sum += roman_dict[roman_number.at(0)];
 	}
 	///
+    // Что, если arabic == nullptr
+    // И, разумеется, должен быть написан такой тест
 	*arabic = sum;
 	return true;
 }
 
+// Чтобы воспользовать этой функцией пользователю нужно знать, сколько памяти выделить
+// под ответ. При этом никакого способа проверки того, хватило ли памяти нет
+// Это плохой интерфейс
 bool convert_arabic_to_roman(unsigned int arabic_number, char* roman_num)
 {
+  // Что, если arabic_number == 0
   if (arabic_number < 0)
     return false;
+
+  // Иметь два тесно связанных массива обычно плохо
+  // Лучше завести массив структур или map
   unsigned int a_num[NUMS] = {1,4,5,9,10,40,50,90,100,400,500,900,1000};
+  // Данная вещь не требует пересоздания на каждом вызове функции,
+  // и она не меняется
+  // Более того, если попытаться поменять данный массив, то могут вохзникнуть проблемы
   char* r_str[NUMS] = {"I","IV","V","IX","X","XL","L","XC","C","CD","D","CM","M"};
   int counter = NUMS;
   *roman_num = '\0';
+  // А если roman_num == nullptr
   while (counter--)
   {
     while (arabic_number >= a_num[counter]) {
@@ -115,6 +140,7 @@ bool convert_arabic_to_roman(unsigned int arabic_number, char* roman_num)
 ////////////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------------
 
+// Опять макросы, обычные константы намного лучше
 #define ILL_TERMINATOR       "ill"
 #define AMB_TERMINATOR       "amb"
 #define ERR_TERMINATOR       "err"
