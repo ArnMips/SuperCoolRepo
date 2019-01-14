@@ -139,24 +139,23 @@ bool convert_arabic_to_roman(unsigned int arabic_number, char* roman_num)
 
 ////////////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------------
-
-// Опять макросы, обычные константы намного лучше
-#define ILL_TERMINATOR       "ill"
-#define AMB_TERMINATOR       "amb"
-#define ERR_TERMINATOR       "err"
-#define UNDEF_DIGIT          -1
-#define ILL_SYMBOL           '?'
-#define MAGIC_CHECKSUM_CONST 11
-
-#define DIGIT_W 3
-#define DIGIT_H 4
-#define DIGIT_N 9
-#define LINE_N (DIGIT_N * DIGIT_W)
+const string ILL_TERMINATOR = "ill";
+const string AMB_TERMINATOR = "amb";
+const string ERR_TERMINATOR = "err";
+///
+const char ILL_SYMBOL = '?';
+///
+const int UNDEF_DIGIT = -1;
+///
+const int DIGIT_W = 3;
+const int DIGIT_H = 4;
+const int DIGIT_N = 9;
+const int LINE_N = DIGIT_N * DIGIT_W;
+///
+const int MAGIC_CHECKSUM_CONST = 11;
 
 // Тесты нужно писать не только на интерфейсные функции, но и на эти
-// Передавать вектор по значению плохо
-// Название функции не соответствует тому, что она делает
-bool calculate_checksum(vector<int> code)
+bool isCorrectChecksum(const vector<int>& code)
 {
     const int codeSize = code.size();
     int checksum = 0;
@@ -200,7 +199,7 @@ void printCode(ostream &output, const vector<int>& code)
         output << d;
     });
     // Код с правильной чек-суммой можно получить восстановившись от ошибки
-    if (!calculate_checksum(code)){
+    if (!isCorrectChecksum(code)){
         output << " " << ERR_TERMINATOR;
     }
 }
@@ -217,12 +216,9 @@ void printIllCode(ostream &output, const vector<int>& code)
 void printAmbCode(ostream &output, const vector<int>& code, const vector<int>& predictionCode)
 {
     for(auto predictionDigit : predictionCode){
-        vector<int> healthyCode;
-        // Вместо цикла лучше использовать replace или replace_if
-        for (auto digit : code){
-            auto healthyDigit = (digit == UNDEF_DIGIT ? predictionDigit : digit);
-            healthyCode.push_back(healthyDigit);
-        }
+        vector<int> healthyCode(code);
+        replace(healthyCode.begin(), healthyCode.end(), UNDEF_DIGIT, predictionDigit);
+
         printCode(output, healthyCode);
         output << " ";
     }
@@ -296,9 +292,7 @@ int convert_asciidigit_to_arabic(istream &input, ostream &output)
     bool isDigitMissingInDict = false;
 
     while(std::getline(input, line)) {
-        // странно, что чтение строки неправильной длины прервет все чтение
-        // было бы логично уметь восстанавливаться после таких ошибок
-        if (input.eof() || line.size() != LINE_N) return false;
+        if (input.eof()) return false;
 
         putSeparatedLineInArray(line_digits, line);
 
