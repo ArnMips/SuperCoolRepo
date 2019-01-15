@@ -213,16 +213,17 @@ void printIllCode(ostream &output, const vector<int>& code)
     output << " " << ILL_TERMINATOR;
 }
 
-void printAmbCode(ostream &output, const vector<int>& code, const vector<int>& predictionCode)
+vector<int> restoreAmbCode(const vector<int>& code, const vector<int>& predictionDigits)
 {
-    for(auto predictionDigit : predictionCode){
+    vector<int> restoreCodes;
+    for(auto predictionDigit : predictionDigits){
         vector<int> healthyCode(code);
         replace(healthyCode.begin(), healthyCode.end(), UNDEF_DIGIT, predictionDigit);
-
-        printCode(output, healthyCode);
-        output << " ";
+        if (isCorrectChecksum(healthyCode)){
+            restoreCodes.push_back(healthyCode);
+        }
     }
-    output << AMB_TERMINATOR;
+    return restoreCodes;
 }
 
 void putSeparatedLineInArray(array<string,DIGIT_N>& line_digits, const string& line)
@@ -299,14 +300,14 @@ int convert_asciidigit_to_arabic(istream &input, ostream &output)
         if (++currentLine == DIGIT_H) {
             currentLine = 0;
             vector<int> code;
-            vector<int> predictionCode;
+            vector<int> predictionDigits;
             for(const auto& digit : line_digits){
                 if (!has_in_the_dict<string, short>(dict, digit)) {
                     for(auto predictionDigit : getSimular(vdict, digit)){
                         int idigit = dict.at(predictionDigit);
-                        predictionCode.push_back(idigit);
+                        predictionDigits.push_back(idigit);
                     }
-                    if (isDigitMissingInDict || predictionCode.empty()) {
+                    if (isDigitMissingInDict || predictionDigits.empty()) {
                         isIll = true;
                     }
                     isDigitMissingInDict = true;
@@ -317,11 +318,12 @@ int convert_asciidigit_to_arabic(istream &input, ostream &output)
             }
             if (isIll){
                 printIllCode(output, code);
-            } else if (predictionCode.empty()){
+            } else if (predictionDigits.empty()){
                 printCode(output, code);
             } else {
                 // Двусмысленность кода может разрешиться благодаря чек-сумме
-                printAmbCode(output, code, predictionCode);
+                auto restoredCode = restoreAmbCode(code, predictionDigits);
+                printCode(output, restoredCode);
             }
             output << endl;
 
