@@ -16,7 +16,7 @@ string readFile(const string& fileName) {
 // Так делать однозначно не стоит
 // Для тестов самым адекватным вариантом кажется использовать stringstream вместо файловых
 // потоков. Можно же считать, что запись в файл работает
-string pathToFiles = "/Users/ilkin_galoev/Documents/7 semester/Designing of information systems/SuperCoolRepo/tests/";
+string pathToFiles = "../tests/";
 
 TEST(TestAsciiToInt, SimpleTest1) {
     auto istr = createStream<std::istream>(pathToFiles+"TestFile1.txt");
@@ -89,7 +89,7 @@ TEST(TestAsciiToInt, SimpleTest6) {
     auto istr = createStream<std::istream>(pathToFiles+"TestFile6.txt");
     auto ostr = createStream<std::ostream>(pathToFiles+"Result.txt");
     bool ret = convert_asciidigit_to_arabic(*istr, *ostr);
-    string correctCodes[4] = { "320123456 320122456 err amb\n", "878902439 err 878902459 err amb\n", "546957811\n", "546?5?8?6 ill\n" };
+    string correctCodes[4] = { "320123456 \n", "878902489\n", "546957811\n", "546?5?8?6 ill\n" };
     EXPECT_TRUE(ret);
     EXPECT_EQ(readFile(pathToFiles+"Result.txt"), correctCodes[0] + correctCodes[1] + correctCodes[2] + correctCodes[3]);
 }
@@ -127,3 +127,6 @@ TEST(TestAsciiToInt, SimpleTest8) {
     EXPECT_TRUE(ret);
     EXPECT_EQ(readFile(pathToFiles+"Result.txt"), correctCodes[0] + correctCodes[1] + correctCodes[2] + correctCodes[3] + correctCodes[4]  + correctCodes[5]  + correctCodes[6]  + correctCodes[7]  + correctCodes[8]  + correctCodes[9]);
 }
+
+
+

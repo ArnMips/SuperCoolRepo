@@ -26,4 +26,5 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 HEADERS += \
     artoConverter.h \
-    streamHelper.h
+    streamHelper.h \
+    artoconverter_constantstypes.h

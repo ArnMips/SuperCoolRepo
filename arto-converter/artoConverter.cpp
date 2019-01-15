@@ -11,6 +11,9 @@
 #include <sstream>
 #include <array>
 #include <algorithm>
+
+#include "artoconverter_constantstypes.h"
+
 // Макросы обычно используются, когда нет других альтернатив
 // Здесь и константы достаточно
 #define    NUMS    13
@@ -138,34 +141,21 @@ bool convert_arabic_to_roman(unsigned int arabic_number, char* roman_num)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------------
-const string ILL_TERMINATOR = "ill";
-const string AMB_TERMINATOR = "amb";
-const string ERR_TERMINATOR = "err";
-///
-const char ILL_SYMBOL = '?';
-///
-const int UNDEF_DIGIT = -1;
-///
-const int DIGIT_W = 3;
-const int DIGIT_H = 4;
-const int DIGIT_N = 9;
-const int LINE_N = DIGIT_N * DIGIT_W;
-///
-const int MAGIC_CHECKSUM_CONST = 11;
+///---------------------------------------------------------------------------------
 
-// Тесты нужно писать не только на интерфейсные функции, но и на эти
-bool isCorrectChecksum(const vector<int>& code)
+
+bool isCorrectChecksum(const dcode_t& code)
 {
-    const int codeSize = code.size();
+    const size_t codeSize = code.size();
     int checksum = 0;
-    for (int i = 0; i<codeSize; i++){
-        checksum += (codeSize - i) * code[i];
+    for (size_t i = 0; i < codeSize; i++){
+        if (code[i] < 0) return false;
+        checksum += (codeSize - i) * static_cast<size_t>(code[i]);
     }
     return checksum % MAGIC_CHECKSUM_CONST == 0 ? true : false;
 }
 
-bool hasSimular(const string& original, const string& verifiable)
+bool hasSimular(const scode_t& original, const scode_t& verifiable)
 {
     static const char BLANK = ' ';
     if (original.size() != verifiable.size()) return false;
@@ -180,44 +170,41 @@ bool hasSimular(const string& original, const string& verifiable)
     return true;
 }
 
-std::vector<string> getSimular(const std::vector<string>& originals, const string& pattern)
+std::vector<string> getSimular(const std::vector<scode_t>& sourceCodes, const scode_t& badCode)
 {
-    std::vector<string> simular;
-    // не нужно реализовывать то, что уже есть в STL
-    // copy_if и std::back_inserter позволяют заменить for на одну строку
-    for (auto & original : originals) {
-        if(hasSimular(original, pattern)) {
-            simular.push_back(original);
+    std::vector<scode_t> simular;
+    copy_if(sourceCodes.begin(), sourceCodes.end(), back_inserter(simular),
+        [&badCode](const scode_t& sourceCode) {
+            return hasSimular(sourceCode, badCode);
         }
-    }
+    );
     return simular;
 }
 
-void printCode(ostream &output, const vector<int>& code)
+void printCode(ostream &output, const dcode_t& code)
 {
-    for_each(code.begin(), code.end(), [&output](const int& d) {
+    for_each(code.begin(), code.end(), [&output](const ddigit_t& d) {
         output << d;
     });
-    // Код с правильной чек-суммой можно получить восстановившись от ошибки
     if (!isCorrectChecksum(code)){
         output << " " << ERR_TERMINATOR;
     }
 }
 
-void printIllCode(ostream &output, const vector<int>& code)
+void printIllCode(ostream &output, const dcode_t& code)
 {
-    for_each(code.begin(), code.end(), [&output](const int& d) {
+    for_each(code.begin(), code.end(), [&output](const ddigit_t& d) {
         if (d == UNDEF_DIGIT) output << ILL_SYMBOL;
         else output << d;
     });
     output << " " << ILL_TERMINATOR;
 }
 
-vector<int> restoreAmbCode(const vector<int>& code, const vector<int>& predictionDigits)
+vector<vector<int> > restoreAmbCode(const dcode_t& code, const dcode_t& predictionDigits)
 {
-    vector<int> restoreCodes;
+    vector<dcode_t > restoreCodes;
     for(auto predictionDigit : predictionDigits){
-        vector<int> healthyCode(code);
+        dcode_t healthyCode(code);
         replace(healthyCode.begin(), healthyCode.end(), UNDEF_DIGIT, predictionDigit);
         if (isCorrectChecksum(healthyCode)){
             restoreCodes.push_back(healthyCode);
@@ -226,22 +213,22 @@ vector<int> restoreAmbCode(const vector<int>& code, const vector<int>& predictio
     return restoreCodes;
 }
 
-void putSeparatedLineInArray(array<string,DIGIT_N>& line_digits, const string& line)
+void putSeparatedLineInArray(array<scode_t,DIGIT_N>& line_digits, const string& line)
 {
     for (size_t i = 0; i < DIGIT_N; ++i) {
         line_digits[i] += line.substr(i*DIGIT_W, DIGIT_W);
     }
 }
 
-void cleanStringArray(array<string,DIGIT_N>& line_digits)
+void cleanStringArray(array<scode_t,DIGIT_N>& line_digits)
 {
-    for_each(line_digits.begin(), line_digits.end(), [](string& s){ s = "" ;});
+    for_each(line_digits.begin(), line_digits.end(), [](sdigit_t& s){ s = "" ;});
 }
 
 
 int convert_asciidigit_to_arabic(istream &input, ostream &output)
 {
-    static const map<string, short> dict = {
+    static const map<scode_t, short> dict = {
         {" _ "
          "| |"
          "|_|"
@@ -283,12 +270,11 @@ int convert_asciidigit_to_arabic(istream &input, ostream &output)
          " _|"
          "   ", 9}
     };
-    vector<string> vdict;
+    vector<scode_t> vdict;
     for (auto d : dict) vdict.push_back(d.first);
-    // Кажется, что часть этих переменных нужны только в цикле и можно сократить их scope
     int currentLine(0);
     string line;
-    array<string,DIGIT_N> line_digits;
+    array<scode_t,DIGIT_N> line_digits;
     bool isIll = false;
     bool isDigitMissingInDict = false;
 
@@ -299,10 +285,10 @@ int convert_asciidigit_to_arabic(istream &input, ostream &output)
 
         if (++currentLine == DIGIT_H) {
             currentLine = 0;
-            vector<int> code;
-            vector<int> predictionDigits;
+            dcode_t code;
+            dcode_t predictionDigits;
             for(const auto& digit : line_digits){
-                if (!has_in_the_dict<string, short>(dict, digit)) {
+                if (!has_in_the_dict(dict, digit)) {
                     for(auto predictionDigit : getSimular(vdict, digit)){
                         int idigit = dict.at(predictionDigit);
                         predictionDigits.push_back(idigit);
@@ -313,17 +299,22 @@ int convert_asciidigit_to_arabic(istream &input, ostream &output)
                     isDigitMissingInDict = true;
                     code.push_back(UNDEF_DIGIT);
                 } else {
-                    code.push_back(dict.at(digit)); 
+                    code.push_back(dict.at(digit));
                 }
             }
             if (isIll){
                 printIllCode(output, code);
             } else if (predictionDigits.empty()){
                 printCode(output, code);
-            } else {
-                // Двусмысленность кода может разрешиться благодаря чек-сумме
+            } else { ///ambiguous  code
                 auto restoredCode = restoreAmbCode(code, predictionDigits);
-                printCode(output, restoredCode);
+                for_each(restoredCode.begin(), restoredCode.end(), [&output](const vector<int>& code) {
+                    printCode(output, code);
+                    output << " ";
+                });
+                if (restoredCode.size() > 1) {
+                    output << AMB_TERMINATOR;
+                }
             }
             output << endl;
 
