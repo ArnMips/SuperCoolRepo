@@ -11,6 +11,7 @@
 #include <sstream>
 #include <array>
 #include <algorithm>
+#include <unordered_map>
 
 #include "artoconverter_constantstypes.h"
 
@@ -20,7 +21,7 @@
 
 using namespace std;
 // Почему не const?
-static map<char, short> roman_dict = {
+static unordered_map<char, short> roman_dict = {
 		{'I', 1},
 		{'V', 5},
 		{'X', 10},
@@ -35,7 +36,7 @@ static map<char, short> roman_dict = {
 // А вот то, что она при линковке будет торчать наружу это уже хуже
 // Нужно либо static делать, либо в анонимный namespace помещать
 template<class K, class V>
-bool has_in_the_dict(const map<K, V>& dict, K value) {
+bool has_in_the_dict(const unordered_map<K, V>& dict, K value) {
     if (dict.find(value) == dict.end()) {
 		return false;
 	}
@@ -143,184 +144,202 @@ bool convert_arabic_to_roman(unsigned int arabic_number, char* roman_num)
 ////////////////////////////////////////////////////////////////////////////////////
 ///---------------------------------------------------------------------------------
 
+enum class CodeCheckStatus {
+    CORRECT,    // check-sum is correct
+    INCORRECT,  // check-sum is NOT correct
+};
+enum class CodeDictStatus {
+    FOUND,      // all symbols found in the dict
+    MISSING,    // some symbols are incorrect (it not found in the dict)
+};
 
-bool isCorrectChecksum(const dcode_t& code)
+static const unordered_map<sdigit_t, short> symbolDigitDict = {
+    {" _ "
+     "| |"
+     "|_|"
+     "   ", 0},
+    {"   "
+     "  |"
+     "  |"
+     "   ", 1},
+    {" _ "
+     " _|"
+     "|_ "
+     "   ", 2},
+    {" _ "
+     " _|"
+     " _|"
+     "   ", 3},
+    {"   "
+     "|_|"
+     "  |"
+     "   ", 4},
+    {" _ "
+     "|_ "
+     " _|"
+     "   ", 5},
+    {" _ "
+     "|_ "
+     "|_|"
+     "   ", 6},
+    {" _ "
+     "  |"
+     "  |"
+     "   ", 7},
+    {" _ "
+     "|_|"
+     "|_|"
+     "   ", 8},
+    {" _ "
+     "|_|"
+     " _|"
+     "   ", 9}
+};
+
+void cleanStringArray(scode_t& symbolCode)
 {
-    const size_t codeSize = code.size();
-    int checksum = 0;
-    for (size_t i = 0; i < codeSize; i++){
-        if (code[i] < 0) return false;
-        checksum += (codeSize - i) * static_cast<size_t>(code[i]);
-    }
-    return checksum % MAGIC_CHECKSUM_CONST == 0 ? true : false;
+    for_each(symbolCode.begin(), symbolCode.end(), [](sdigit_t& s){ s = "" ;});
 }
 
-bool hasSimular(const scode_t& original, const scode_t& verifiable)
-{
-    static const char BLANK = ' ';
-    if (original.size() != verifiable.size()) return false;
-    bool hasDiff = false;
-    for (size_t i = 0; i < original.size(); ++i) {
-        if (original[i] != verifiable[i]) {
-            if (verifiable[i] != BLANK) return false;
-            if (hasDiff) return false;
-            hasDiff = true;
-        }
-    }
-    return true;
-}
-
-std::vector<string> getSimular(const std::vector<scode_t>& sourceCodes, const scode_t& badCode)
-{
-    std::vector<scode_t> simular;
-    copy_if(sourceCodes.begin(), sourceCodes.end(), back_inserter(simular),
-        [&badCode](const scode_t& sourceCode) {
-            return hasSimular(sourceCode, badCode);
-        }
-    );
-    return simular;
-}
-
-void printCode(ostream &output, const dcode_t& code)
-{
-    for_each(code.begin(), code.end(), [&output](const ddigit_t& d) {
-        output << d;
-    });
-    if (!isCorrectChecksum(code)){
-        output << " " << ERR_TERMINATOR;
-    }
-}
-
-void printIllCode(ostream &output, const dcode_t& code)
-{
-    for_each(code.begin(), code.end(), [&output](const ddigit_t& d) {
-        if (d == UNDEF_DIGIT) output << ILL_SYMBOL;
-        else output << d;
-    });
-    output << " " << ILL_TERMINATOR;
-}
-
-vector<vector<int> > restoreAmbCode(const dcode_t& code, const dcode_t& predictionDigits)
-{
-    vector<dcode_t > restoreCodes;
-    for(auto predictionDigit : predictionDigits){
-        dcode_t healthyCode(code);
-        replace(healthyCode.begin(), healthyCode.end(), UNDEF_DIGIT, predictionDigit);
-        if (isCorrectChecksum(healthyCode)){
-            restoreCodes.push_back(healthyCode);
-        }
-    }
-    return restoreCodes;
-}
-
-void putSeparatedLineInArray(array<scode_t,DIGIT_N>& line_digits, const string& line)
+void putSeparatedLineInArray(scode_t& line_digits, const string& line)
 {
     for (size_t i = 0; i < DIGIT_N; ++i) {
         line_digits[i] += line.substr(i*DIGIT_W, DIGIT_W);
     }
 }
 
-void cleanStringArray(array<scode_t,DIGIT_N>& line_digits)
+CodeCheckStatus getCheckCodeStatus(const scode_t& symbolCode)
 {
-    for_each(line_digits.begin(), line_digits.end(), [](sdigit_t& s){ s = "" ;});
+    const size_t codeN = symbolCode.size();
+    int checksum(0), idx(0);
+    for (const auto& symbolDigit : symbolCode){
+        if(has_in_the_dict(symbolDigitDict, symbolDigit)){
+            checksum += (codeN - idx) * symbolDigitDict.at(symbolDigit);
+        } else {
+            return CodeCheckStatus::INCORRECT;
+        }
+    }
+    return (checksum % MAGIC_CHECKSUM_CONST == 0)
+            ? CodeCheckStatus::CORRECT : CodeCheckStatus::INCORRECT;
 }
 
+CodeDictStatus getCodeDictStatus(const scode_t& symbolCode)
+{
+    auto nCorrectDigit = count_if(symbolCode.begin(), symbolCode.end(),
+                                  [](const sdigit_t& sdigit) { return has_in_the_dict(symbolDigitDict, sdigit); }
+    );
+
+    if (static_cast<size_t>(nCorrectDigit) == symbolCode.size()){
+        return CodeDictStatus::FOUND;
+    } else {
+        return CodeDictStatus::MISSING;
+    }
+}
+
+ostream& operator<<(ostream& out, const scode_t& symbolCode)
+{
+    for (const sdigit_t& symbolDigit : symbolCode) {
+        out << (has_in_the_dict(symbolDigitDict, symbolDigit)
+                ? symbolDigitDict.at(symbolDigit)
+                : ILL_SYMBOL);
+    }
+    return out;
+}
+
+bool hasSimularDigit(const sdigit_t& sourceSDigit, const sdigit_t& verifiableSDigit)
+{
+    if(sourceSDigit.size() != verifiableSDigit.size()) return false;
+    bool hasDiff = false;
+    for(size_t i = 0; i < sourceSDigit.size(); ++i) {
+        if(sourceSDigit[i] != verifiableSDigit[i]) {
+            if(verifiableSDigit[i] != BLANK_SYMBOL) return false;
+            if(hasDiff) return false;
+            hasDiff = true;
+        }
+    }
+    return true;
+}
+
+std::vector<sdigit_t> getSimilarDigits(const sdigit_t& patternSCode)
+{
+    static vector<sdigit_t> sourceSymbolCodes;
+    if (sourceSymbolCodes.empty()) {
+        for (auto d : symbolDigitDict) sourceSymbolCodes.push_back(d.first);
+    }
+    ///
+    std::vector<sdigit_t> similarDigits;
+    copy_if(sourceSymbolCodes.begin(), sourceSymbolCodes.end(),
+            back_inserter(similarDigits),
+            [&patternSCode](const sdigit_t& sourceSymbolCode) {
+                return hasSimularDigit(sourceSymbolCode, patternSCode);
+            }
+    );
+    return sourceSymbolCodes;
+}
+
+vector<scode_t> restoreCode(const scode_t& badCode)
+{    
+    vector<scode_t> restoredCodes;
+    for(size_t i = 0; i < badCode.size(); ++i) {
+        for(const auto& digit : getSimilarDigits(badCode[i])) {
+            auto tmpCode = badCode;
+            tmpCode[i] = digit; // <- attempt to make correct code
+            if(getCheckCodeStatus(tmpCode) == CodeCheckStatus::CORRECT) {
+                restoredCodes.push_back(tmpCode);
+            }
+        }
+    }
+    return restoredCodes;
+}
 
 int convert_asciidigit_to_arabic(istream &input, ostream &output)
 {
-    static const map<scode_t, short> dict = {
-        {" _ "
-         "| |"
-         "|_|"
-         "   ", 0},
-        {"   "
-         "  |"
-         "  |"
-         "   ", 1},
-        {" _ "
-         " _|"
-         "|_ "
-         "   ", 2},
-        {" _ "
-         " _|"
-         " _|"
-         "   ", 3},
-        {"   "
-         "|_|"
-         "  |"
-         "   ", 4},
-        {" _ "
-         "|_ "
-         " _|"
-         "   ", 5},
-        {" _ "
-         "|_ "
-         "|_|"
-         "   ", 6},
-        {" _ "
-         "  |"
-         "  |"
-         "   ", 7},
-        {" _ "
-         "|_|"
-         "|_|"
-         "   ", 8},
-        {" _ "
-         "|_|"
-         " _|"
-         "   ", 9}
-    };
-    vector<scode_t> vdict;
-    for (auto d : dict) vdict.push_back(d.first);
     int currentLine(0);
     string line;
-    array<scode_t,DIGIT_N> line_digits;
-    bool isIll = false;
-    bool isDigitMissingInDict = false;
-
+    scode_t symbolCode;
+    ///
     while(std::getline(input, line)) {
         if (input.eof()) return false;
-
-        putSeparatedLineInArray(line_digits, line);
-
+        ///
+        putSeparatedLineInArray(symbolCode, line);
+        ///
+        // was readed all for lines of symbole code
         if (++currentLine == DIGIT_H) {
             currentLine = 0;
-            dcode_t code;
-            dcode_t predictionDigits;
-            for(const auto& digit : line_digits){
-                if (!has_in_the_dict(dict, digit)) {
-                    for(auto predictionDigit : getSimular(vdict, digit)){
-                        int idigit = dict.at(predictionDigit);
-                        predictionDigits.push_back(idigit);
-                    }
-                    if (isDigitMissingInDict || predictionDigits.empty()) {
-                        isIll = true;
-                    }
-                    isDigitMissingInDict = true;
-                    code.push_back(UNDEF_DIGIT);
-                } else {
-                    code.push_back(dict.at(digit));
+            ///
+            auto codeStatus = getCheckCodeStatus(symbolCode);
+            switch (codeStatus) {
+            case CodeCheckStatus::CORRECT : {
+                output << symbolCode;
+            } break;
+            case CodeCheckStatus::INCORRECT : {
+                auto restoredCodes = restoreCode(symbolCode);
+                // the code is restored uniquely
+                if (restoredCodes.size() == 1) {
+                    output << restoredCodes.front();
                 }
-            }
-            if (isIll){
-                printIllCode(output, code);
-            } else if (predictionDigits.empty()){
-                printCode(output, code);
-            } else { ///ambiguous  code
-                auto restoredCode = restoreAmbCode(code, predictionDigits);
-                for_each(restoredCode.begin(), restoredCode.end(), [&output](const vector<int>& code) {
-                    printCode(output, code);
-                    output << " ";
-                });
-                if (restoredCode.size() > 1) {
+                // the code is restored ambiguously
+                else if (restoredCodes.size() > 1) {
+                    for (const auto& restoredCode : restoredCodes){
+                        output << restoredCode << BLANK_SYMBOL;
+                    }
                     output << AMB_TERMINATOR;
                 }
+                // the code is not restored
+                else {
+                    switch (getCodeDictStatus(symbolCode)) {
+                    case CodeDictStatus::MISSING : {
+                        output << symbolCode << BLANK_SYMBOL << ILL_TERMINATOR;
+                    } break;
+                    case CodeDictStatus::FOUND : {
+                        output << symbolCode << BLANK_SYMBOL << ERR_TERMINATOR;
+                    } break;
+                    }
+                }
+            } break;
             }
             output << endl;
-
-            cleanStringArray(line_digits);
-            isIll = false;
-            isDigitMissingInDict = false;
+            cleanStringArray(symbolCode);
         }
     }
     return true;
