@@ -13,7 +13,7 @@ string readFile(const string& fileName) {
     return strFile;
 }
 
-string pathToFiles = "/Users/ilkin_galoev/Documents/7 semester/Designing of information systems/SuperCoolRepo/tests/";
+string pathToFiles = "../tests/";
 
 TEST(TestAsciiToInt, SimpleTest1) {
     auto istr = createStream<std::istream>(pathToFiles+"TestFile1.txt");
@@ -52,16 +52,16 @@ TEST(TestAsciiToInt, SimpleTest4) {
     auto istr = createStream<std::istream>(pathToFiles+"TestFile4.txt");
     auto ostr = createStream<std::ostream>(pathToFiles+"Result.txt");
     bool ret = convert_asciidigit_to_arabic(*istr, *ostr);
-    string correctCodes[10] = { "000000001 err\n",
-                                "111111111 err\n",
+    string correctCodes[10] = { "000008001\n",
+                                "711111111\n",
                                 "222222222 err\n",
-                                "333333333 err\n",
+                                "333393333\n",
                                 "444444444 err\n",
-                                "555555555 err\n",
-                                "666666666 err\n",
+                                "559555555 555655555 amb\n",
+                                "686666666\n",
                                 "777777777 err\n",
                                 "888888888 err\n",
-                                "999999999 err\n" };
+                                "899999999\n" };
     EXPECT_TRUE(ret);
     EXPECT_EQ(readFile(pathToFiles+"Result.txt"), correctCodes[0] + correctCodes[1] + correctCodes[2] + correctCodes[3] + correctCodes[4]  + correctCodes[5]  + correctCodes[6]  + correctCodes[7]  + correctCodes[8]  + correctCodes[9]);
 }
@@ -86,7 +86,7 @@ TEST(TestAsciiToInt, SimpleTest6) {
     auto istr = createStream<std::istream>(pathToFiles+"TestFile6.txt");
     auto ostr = createStream<std::ostream>(pathToFiles+"Result.txt");
     bool ret = convert_asciidigit_to_arabic(*istr, *ostr);
-    string correctCodes[4] = { "320123456 320122456 err amb\n", "878902439 err 878902459 err amb\n", "546957811\n", "546?5?8?6 ill\n" };
+    string correctCodes[4] = { "320123456\n", "878502489 err\n", "546957811\n", "546?5?8?6 ill\n" };
     EXPECT_TRUE(ret);
     EXPECT_EQ(readFile(pathToFiles+"Result.txt"), correctCodes[0] + correctCodes[1] + correctCodes[2] + correctCodes[3]);
 }
@@ -94,16 +94,16 @@ TEST(TestAsciiToInt, SimpleTest7) {
     auto istr = createStream<std::istream>(pathToFiles+"TestFile7.txt");
     auto ostr = createStream<std::ostream>(pathToFiles+"Result.txt");
     bool ret = convert_asciidigit_to_arabic(*istr, *ostr);
-    string correctCodes[10] = { "000000001 err 060000001 err amb\n",
-                                "111111111 err amb\n",
-                                "222222222 err amb\n",
-                                "333333333 err 353333333 err amb\n",
-                                "444444444 err amb\n",
-                                "535555555 555555555 err amb\n",
-                                "666666666 err amb\n",
-                                "777777777 err amb\n",
-                                "888888888 err amb\n",
-                                "999999999 err amb\n" };
+    string correctCodes[10] = { "0?0000001 ill\n", // код не может
+                                "1?1111111 ill\n", // быть восстановлен
+                                "2?2222222 ill\n", // из-за неверной
+                                "3?3333333 ill\n", // чек-суммы
+                                "4?4444444 ill\n", // ..
+                                "535555555\n",
+                                "6?6666666 ill\n", // ..
+                                "7?7777777 ill\n", // ..
+                                "8?8888888 ill\n", // ..
+                                "9?9999999 ill\n", };
     EXPECT_TRUE(ret);
     EXPECT_EQ(readFile(pathToFiles+"Result.txt"), correctCodes[0] + correctCodes[1] + correctCodes[2] + correctCodes[3] + correctCodes[4]  + correctCodes[5]  + correctCodes[6]  + correctCodes[7]  + correctCodes[8]  + correctCodes[9]);
 }
@@ -111,16 +111,19 @@ TEST(TestAsciiToInt, SimpleTest8) {
     auto istr = createStream<std::istream>(pathToFiles+"TestFile8.txt");
     auto ostr = createStream<std::ostream>(pathToFiles+"Result.txt");
     bool ret = convert_asciidigit_to_arabic(*istr, *ostr);
-    string correctCodes[10] = { "000000000 060000000 err amb\n",
-                                "111111110 amb\n",
-                                "2?2222220 ill\n",
+    string correctCodes[10] = { "000000000\n",
+                                "111111110\n",
+                                "222222220\n",
                                 "3?33?333? ill\n",
-                                "444444440 amb\n",
-                                "553555550 err 555555550 amb\n",
+                                "444444440\n",
+                                "555555550\n",
                                 "66?66?660 ill\n",
-                                "777777770 amb\n",
-                                "888888880 amb\n",
+                                "777777770\n",
+                                "888888880\n",
                                 "999999990\n"};
     EXPECT_TRUE(ret);
     EXPECT_EQ(readFile(pathToFiles+"Result.txt"), correctCodes[0] + correctCodes[1] + correctCodes[2] + correctCodes[3] + correctCodes[4]  + correctCodes[5]  + correctCodes[6]  + correctCodes[7]  + correctCodes[8]  + correctCodes[9]);
 }
+
+
+

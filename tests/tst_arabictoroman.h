@@ -53,3 +53,8 @@ TEST(TestArabicToRoman, SimpleTest7) {
     EXPECT_EQ(string(retRomanNum), correctRomanNum);
     EXPECT_TRUE(ret);
 }
+TEST(TestArabicToRoman, DISABLED_BadTest) {
+    // Здесь падает, а потом он пофэйлится
+    bool ret = convert_arabic_to_roman(0);
+    EXPECT_FALSE(ret);
+}

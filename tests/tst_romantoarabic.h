@@ -41,3 +41,15 @@ TEST(TestRomanToArabic, ErrorTest3) {
     EXPECT_EQ(retArabicNum, 0);
     EXPECT_FALSE(ret);
 }
+TEST(TestRomanToArabic, DISABLED_BadRoman_1) {
+    short retArabicNum = 0;
+    bool ret = convert_roman_to_arabic("CIC", &retArabicNum);
+    EXPECT_EQ(retArabicNum, 0);
+    EXPECT_FALSE(ret);
+}
+TEST(TestRomanToArabic, DISABLED_BadRoman_2) {
+    short retArabicNum = 0;
+    bool ret = convert_roman_to_arabic("XCI", &retArabicNum);
+    EXPECT_EQ(retArabicNum, 91);
+    EXPECT_TRUE(ret);
+}
