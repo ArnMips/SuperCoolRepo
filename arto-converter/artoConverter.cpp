@@ -1,5 +1,5 @@
 #include "artoConverter.h"
-#include <map>
+#include <unordered_map>
 #include <string>
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,17 +11,14 @@
 #include <sstream>
 #include <array>
 #include <algorithm>
-#include <unordered_map>
 
 #include "artoconverter_constantstypes.h"
 
-// Макросы обычно используются, когда нет других альтернатив
-// Здесь и константы достаточно
-#define    NUMS    13
+const static unsigned int NUMS = 13;
 
 using namespace std;
-// Почему не const?
-static unordered_map<char, short> roman_dict = {
+
+const static unordered_map<char, short> roman_dict = {
 		{'I', 1},
 		{'V', 5},
 		{'X', 10},
@@ -32,9 +29,22 @@ static unordered_map<char, short> roman_dict = {
 		{'Z', 2000},
 };
 
-// Функция пишется в одну строчку, но это нестрашно
-// А вот то, что она при линковке будет торчать наружу это уже хуже
-// Нужно либо static делать, либо в анонимный namespace помещать
+const static unordered_map<char, short> roman_num_exept_repeated = {
+    {'I', 1},
+    {'X', 10},
+    {'C', 100},
+    {'M', 1000},
+};
+
+const static unordered_map<string, short> roman_num_subtraction_rule = {
+    {"IV", 4},
+    {"IX", 9},
+    {"XL", 40},
+    {"XC", 90},
+    {"CD", 400},
+    {"CM", 900},
+};
+
 template<class K, class V>
 bool has_in_the_dict(const unordered_map<K, V>& dict, K value) {
     if (dict.find(value) == dict.end()) {
@@ -43,40 +53,50 @@ bool has_in_the_dict(const unordered_map<K, V>& dict, K value) {
 	return true;
 }
 
-// Также вопрос по линковке
-// Строку лучше передавать по ссылке
-// Эту функцию обязательно нужно покрывать тестами отдельно
-// Кажется, что эта функция не работает, так как CIC и IIIVL
-// не являются корректными римскими числами
-bool is_correct_roman_number(std::string roman_number)
+
+static bool is_correct_roman_number(std::string &roman_number)
 {
 	char counter(0);
 	const auto MAX_REPEATABLY_NUM = 3;
 	///
-	const auto first_symbol = roman_number.at(0);
+    const auto first_symbol = roman_number.at(roman_number.size() - 1);
     if (!has_in_the_dict<char,short>(roman_dict, first_symbol)) {
 		return false;
 	}
 	///
-	for (auto i = 0; i < roman_number.size() - 1; ++i) {
-		const auto current_symbol = roman_number.at(i);
-		const auto next_symbol = roman_number.at(i + 1);
-        // Типы-параметры здесь необязательно писать, если правильно описать шаблон
-        if (!has_in_the_dict<char, short>(roman_dict, next_symbol)) {
+    for (int i = roman_number.size() - 1; i > 0 ; --i) {
+        const auto current_symbol = roman_number.at(i);
+        const auto next_symbol = roman_number.at(i - 1);
+        if (!has_in_the_dict(roman_dict, next_symbol)) {
 			return false;
-		} else 	if (current_symbol == next_symbol)	{
-			++counter;
-			if (counter == MAX_REPEATABLY_NUM) {
-				return false;
-			}
+        } else 	if (current_symbol == next_symbol)	{
+            if (has_in_the_dict(roman_num_exept_repeated, current_symbol)) {
+                ++counter;
+                if (counter == MAX_REPEATABLY_NUM) {
+                    return false;
+                }
+            } else {
+                return false;
+            }
 		} else {
-			counter = 0;
+            counter = 0;
 		}
+        if ((roman_dict.at(next_symbol) < roman_dict.at(current_symbol))) {
+            if (((i - 2) >= 0) && (roman_number.at(i - 2) == next_symbol)) {
+                  return false;
+            }
+            char *check_this = new char [3];
+            check_this[0] = next_symbol;
+            check_this[1] = current_symbol;
+            check_this[3] = '\0';
+            if (!has_in_the_dict(roman_num_subtraction_rule, string(check_this)))
+                return false;
+        }
 	}
 	return true;
 }
 
-bool convert_roman_to_arabic(const char* roman_num, short *arabic)
+bool convert_roman_to_arabic(const char* roman_num, short &arabic)
 {
 	string roman_number(roman_num);
 	///
@@ -89,53 +109,70 @@ bool convert_roman_to_arabic(const char* roman_num, short *arabic)
 	short sum(0);
 
 	const auto roman_n = roman_number.size();
-	for (int i = roman_n - 1; i >= (int)(roman_n % 2); i -= 2) {
+    int i = roman_n - 1;
+    for (; i >= 1; i -= 2) {
 		const auto first_symbol = roman_number[i-1];
 		const auto second_symbol = roman_number[i];
 		///
-		const auto arabic_first = roman_dict[first_symbol];
-		const auto arabic_second= roman_dict[second_symbol];
+        const auto arabic_first = roman_dict.at(first_symbol);
+        const auto arabic_second= roman_dict.at(second_symbol);
 		if (arabic_first >= arabic_second) {
-			sum += arabic_first + arabic_second;
+            if ((i - 2) >= 0 && roman_dict.at(roman_number[i-2]) < arabic_first) {
+                sum += arabic_second;
+                i += 1;
+            }
+            else {
+                sum += arabic_first + arabic_second;
+            }
 		} else {
 			sum += arabic_second - arabic_first;
 		}
 	}
 	///
-    if(roman_n%2 == 1) {
-		sum += roman_dict[roman_number.at(0)];
+    if(i == 0) {
+        sum += roman_dict.at(roman_number.at(0));
 	}
-	///
-    // Что, если arabic == nullptr
-    // И, разумеется, должен быть написан такой тест
-	*arabic = sum;
+    ///
+
+    arabic = sum;
 	return true;
 }
 
-// Чтобы воспользовать этой функцией пользователю нужно знать, сколько памяти выделить
-// под ответ. При этом никакого способа проверки того, хватило ли памяти нет
-// Это плохой интерфейс
-bool convert_arabic_to_roman(unsigned int arabic_number, char* roman_num)
+struct NumAR
 {
-  // Что, если arabic_number == 0
-  if (arabic_number < 0)
+    NumAR(int _aNum, char *_rStr): a_num(_aNum), r_str(_rStr)
+    {
+    }
+    const int a_num;
+    const string r_str;
+};
+
+
+bool convert_arabic_to_roman(unsigned int arabic_number, string &roman_num)
+{
+  if (arabic_number <= 0)
     return false;
 
-  // Иметь два тесно связанных массива обычно плохо
-  // Лучше завести массив структур или map
-  unsigned int a_num[NUMS] = {1,4,5,9,10,40,50,90,100,400,500,900,1000};
-  // Данная вещь не требует пересоздания на каждом вызове функции,
-  // и она не меняется
-  // Более того, если попытаться поменять данный массив, то могут вохзникнуть проблемы
-  char* r_str[NUMS] = {"I","IV","V","IX","X","XL","L","XC","C","CD","D","CM","M"};
   int counter = NUMS;
-  *roman_num = '\0';
-  // А если roman_num == nullptr
+  const static NumAR dict[NUMS] = {NumAR(1, "I"),
+                     NumAR(4, "IV"),
+                     NumAR(5, "V"),
+                     NumAR(9, "IX"),
+                     NumAR(10, "X"),
+                     NumAR(40, "XL"),
+                     NumAR(50, "L"),
+                     NumAR(90, "XC"),
+                     NumAR(100, "C"),
+                     NumAR(400, "CD"),
+                     NumAR(500, "D"),
+                     NumAR(900, "CM"),
+                     NumAR(1000, "M")};
+
   while (counter--)
   {
-    while (arabic_number >= a_num[counter]) {
-      arabic_number -= a_num[counter];
-      strcat(roman_num, r_str[counter]);
+    while (arabic_number >= dict[counter].a_num) {
+      arabic_number -= dict[counter].a_num;
+      roman_num.append(dict[counter].r_str);
     }
   }
   return true;
@@ -356,3 +393,4 @@ int convert_asciidigit_to_arabic(istream &input, ostream &output)
     }
     return true;
 }
+
