@@ -5,9 +5,9 @@
 ///
 /// CONSTANTS
 ///
-const std::string ILL_TERMINATOR = "ill";
-const std::string AMB_TERMINATOR = "amb";
-const std::string ERR_TERMINATOR = "err";
+const std::string ILL_TERMINATOR = " ill";
+const std::string AMB_TERMINATOR = " amb";
+const std::string ERR_TERMINATOR = " err";
 ///
 const char ILL_SYMBOL = '?';
 const char BLANK_SYMBOL = ' ';

@@ -215,6 +215,7 @@ CodeCheckStatus getCheckCodeStatus(const scode_t& symbolCode)
     for (const auto& symbolDigit : symbolCode){
         if(has_in_the_dict(symbolDigitDict, symbolDigit)){
             checksum += (codeN - idx) * symbolDigitDict.at(symbolDigit);
+            ++idx;
         } else {
             return CodeCheckStatus::INCORRECT;
         }
@@ -239,9 +240,23 @@ CodeDictStatus getCodeDictStatus(const scode_t& symbolCode)
 ostream& operator<<(ostream& out, const scode_t& symbolCode)
 {
     for (const sdigit_t& symbolDigit : symbolCode) {
-        out << (has_in_the_dict(symbolDigitDict, symbolDigit)
-                ? symbolDigitDict.at(symbolDigit)
-                : ILL_SYMBOL);
+        if(has_in_the_dict(symbolDigitDict, symbolDigit)) {
+            out << symbolDigitDict.at(symbolDigit);
+        } else {
+            out << ILL_SYMBOL;
+        }
+    }
+    return out;
+}
+
+ostream& operator<<(ostream& out, const std::vector<scode_t>& symbolCodes)
+{
+
+    for(auto it = symbolCodes.begin(); it != symbolCodes.end();) {
+        out << *it;
+        if (++it != symbolCodes.end()) {
+            out << BLANK_SYMBOL;
+        }
     }
     return out;
 }
@@ -268,13 +283,14 @@ std::vector<sdigit_t> getSimilarDigits(const sdigit_t& patternSCode)
     }
     ///
     std::vector<sdigit_t> similarDigits;
+
     copy_if(sourceSymbolCodes.begin(), sourceSymbolCodes.end(),
             back_inserter(similarDigits),
             [&patternSCode](const sdigit_t& sourceSymbolCode) {
                 return hasSimularDigit(sourceSymbolCode, patternSCode);
             }
     );
-    return sourceSymbolCodes;
+    return similarDigits;
 }
 
 vector<scode_t> restoreCode(const scode_t& badCode)
@@ -297,18 +313,17 @@ int convert_asciidigit_to_arabic(istream &input, ostream &output)
     int currentLine(0);
     string line;
     scode_t symbolCode;
-    ///
+
     while(std::getline(input, line)) {
         if (input.eof()) return false;
-        ///
+
         putSeparatedLineInArray(symbolCode, line);
-        ///
-        // was readed all for lines of symbole code
+
+        // all lines were read for one symbolCode
         if (++currentLine == DIGIT_H) {
             currentLine = 0;
-            ///
-            auto codeStatus = getCheckCodeStatus(symbolCode);
-            switch (codeStatus) {
+
+            switch (getCheckCodeStatus(symbolCode)) {
             case CodeCheckStatus::CORRECT : {
                 output << symbolCode;
             } break;
@@ -320,19 +335,16 @@ int convert_asciidigit_to_arabic(istream &input, ostream &output)
                 }
                 // the code is restored ambiguously
                 else if (restoredCodes.size() > 1) {
-                    for (const auto& restoredCode : restoredCodes){
-                        output << restoredCode << BLANK_SYMBOL;
-                    }
-                    output << AMB_TERMINATOR;
+                    output << restoredCodes << AMB_TERMINATOR;
                 }
                 // the code is not restored
                 else {
                     switch (getCodeDictStatus(symbolCode)) {
                     case CodeDictStatus::MISSING : {
-                        output << symbolCode << BLANK_SYMBOL << ILL_TERMINATOR;
+                        output << symbolCode << ILL_TERMINATOR;
                     } break;
                     case CodeDictStatus::FOUND : {
-                        output << symbolCode << BLANK_SYMBOL << ERR_TERMINATOR;
+                        output << symbolCode << ERR_TERMINATOR;
                     } break;
                     }
                 }
