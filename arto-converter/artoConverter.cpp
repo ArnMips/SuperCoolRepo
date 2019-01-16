@@ -1,5 +1,5 @@
 #include "artoConverter.h"
-#include <map>
+#include <unordered_map>
 #include <string>
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,7 +16,7 @@ const static unsigned int NUMS = 13;
 
 using namespace std;
 
-const static map<char, short> roman_dict = {
+const static unordered_map<char, short> roman_dict = {
 		{'I', 1},
 		{'V', 5},
 		{'X', 10},
@@ -27,14 +27,14 @@ const static map<char, short> roman_dict = {
 		{'Z', 2000},
 };
 
-const static map<char, short> roman_num_exept_repeated = {
+const static unordered_map<char, short> roman_num_exept_repeated = {
     {'I', 1},
     {'X', 10},
     {'C', 100},
     {'M', 1000},
 };
 
-const static map<string, short> roman_num_subtraction_rule = {
+const static unordered_map<string, short> roman_num_subtraction_rule = {
     {"IV", 4},
     {"IX", 9},
     {"XL", 40},
@@ -44,7 +44,7 @@ const static map<string, short> roman_num_subtraction_rule = {
 };
 
 template<class K, class V>
-static bool has_in_the_dict(const map<K, V>& dict, K value) {
+static bool has_in_the_dict(const unordered_map<K, V>& dict, K value) {
     if (dict.find(value) == dict.end()) {
 		return false;
 	}
@@ -277,7 +277,7 @@ void cleanStringArray(array<string,DIGIT_N>& line_digits)
 
 int convert_asciidigit_to_arabic(istream &input, ostream &output)
 {
-    static const map<string, short> dict = {
+    static const unordered_map<string, short> dict = {
         {" _ "
          "| |"
          "|_|"
@@ -367,3 +367,4 @@ int convert_asciidigit_to_arabic(istream &input, ostream &output)
     }
     return true;
 }
+
