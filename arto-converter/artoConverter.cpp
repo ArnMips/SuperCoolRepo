@@ -1,5 +1,5 @@
 #include "artoConverter.h"
-#include <map>
+#include <unordered_map>
 #include <string>
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,10 +11,14 @@
 #include <sstream>
 #include <array>
 #include <algorithm>
-#define    NUMS    13
+
+#include "artoconverter_constantstypes.h"
+
+const static unsigned int NUMS = 13;
 
 using namespace std;
-static map<char, short> roman_dict = {
+
+const static unordered_map<char, short> roman_dict = {
 		{'I', 1},
 		{'V', 5},
 		{'X', 10},
@@ -25,42 +29,74 @@ static map<char, short> roman_dict = {
 		{'Z', 2000},
 };
 
+const static unordered_map<char, short> roman_num_exept_repeated = {
+    {'I', 1},
+    {'X', 10},
+    {'C', 100},
+    {'M', 1000},
+};
+
+const static unordered_map<string, short> roman_num_subtraction_rule = {
+    {"IV", 4},
+    {"IX", 9},
+    {"XL", 40},
+    {"XC", 90},
+    {"CD", 400},
+    {"CM", 900},
+};
+
 template<class K, class V>
-bool has_in_the_dict(const map<K, V>& dict, K value) {
+bool has_in_the_dict(const unordered_map<K, V>& dict, K value) {
     if (dict.find(value) == dict.end()) {
 		return false;
 	}
 	return true;
 }
 
-bool is_correct_roman_number(std::string roman_number)
+
+static bool is_correct_roman_number(std::string &roman_number)
 {
 	char counter(0);
 	const auto MAX_REPEATABLY_NUM = 3;
 	///
-	const auto first_symbol = roman_number.at(0);
+    const auto first_symbol = roman_number.at(roman_number.size() - 1);
     if (!has_in_the_dict<char,short>(roman_dict, first_symbol)) {
 		return false;
 	}
 	///
-	for (auto i = 0; i < roman_number.size() - 1; ++i) {
-		const auto current_symbol = roman_number.at(i);
-		const auto next_symbol = roman_number.at(i + 1);
-        if (!has_in_the_dict<char, short>(roman_dict, next_symbol)) {
+    for (int i = roman_number.size() - 1; i > 0 ; --i) {
+        const auto current_symbol = roman_number.at(i);
+        const auto next_symbol = roman_number.at(i - 1);
+        if (!has_in_the_dict(roman_dict, next_symbol)) {
 			return false;
-		} else 	if (current_symbol == next_symbol)	{
-			++counter;
-			if (counter == MAX_REPEATABLY_NUM) {
-				return false;
-			}
+        } else 	if (current_symbol == next_symbol)	{
+            if (has_in_the_dict(roman_num_exept_repeated, current_symbol)) {
+                ++counter;
+                if (counter == MAX_REPEATABLY_NUM) {
+                    return false;
+                }
+            } else {
+                return false;
+            }
 		} else {
-			counter = 0;
+            counter = 0;
 		}
+        if ((roman_dict.at(next_symbol) < roman_dict.at(current_symbol))) {
+            if (((i - 2) >= 0) && (roman_number.at(i - 2) == next_symbol)) {
+                  return false;
+            }
+            char *check_this = new char [3];
+            check_this[0] = next_symbol;
+            check_this[1] = current_symbol;
+            check_this[3] = '\0';
+            if (!has_in_the_dict(roman_num_subtraction_rule, string(check_this)))
+                return false;
+        }
 	}
 	return true;
 }
 
-bool convert_roman_to_arabic(const char* roman_num, short *arabic)
+bool convert_roman_to_arabic(const char* roman_num, short &arabic)
 {
 	string roman_number(roman_num);
 	///
@@ -73,232 +109,288 @@ bool convert_roman_to_arabic(const char* roman_num, short *arabic)
 	short sum(0);
 
 	const auto roman_n = roman_number.size();
-	for (int i = roman_n - 1; i >= (int)(roman_n % 2); i -= 2) {
+    int i = roman_n - 1;
+    for (; i >= 1; i -= 2) {
 		const auto first_symbol = roman_number[i-1];
 		const auto second_symbol = roman_number[i];
 		///
-		const auto arabic_first = roman_dict[first_symbol];
-		const auto arabic_second= roman_dict[second_symbol];
+        const auto arabic_first = roman_dict.at(first_symbol);
+        const auto arabic_second= roman_dict.at(second_symbol);
 		if (arabic_first >= arabic_second) {
-			sum += arabic_first + arabic_second;
+            if ((i - 2) >= 0 && roman_dict.at(roman_number[i-2]) < arabic_first) {
+                sum += arabic_second;
+                i += 1;
+            }
+            else {
+                sum += arabic_first + arabic_second;
+            }
 		} else {
 			sum += arabic_second - arabic_first;
 		}
 	}
 	///
-    if(roman_n%2 == 1) {
-		sum += roman_dict[roman_number.at(0)];
+    if(i == 0) {
+        sum += roman_dict.at(roman_number.at(0));
 	}
-	///
-	*arabic = sum;
+    ///
+
+    arabic = sum;
 	return true;
 }
 
-bool convert_arabic_to_roman(unsigned int arabic_number, char* roman_num)
+struct NumAR
 {
-  if (arabic_number < 0)
+    NumAR(int _aNum, char *_rStr): a_num(_aNum), r_str(_rStr)
+    {
+    }
+    const int a_num;
+    const string r_str;
+};
+
+
+bool convert_arabic_to_roman(unsigned int arabic_number, string &roman_num)
+{
+  if (arabic_number <= 0)
     return false;
-  unsigned int a_num[NUMS] = {1,4,5,9,10,40,50,90,100,400,500,900,1000};
-  char* r_str[NUMS] = {"I","IV","V","IX","X","XL","L","XC","C","CD","D","CM","M"};
+
   int counter = NUMS;
-  *roman_num = '\0';
+  const static NumAR dict[NUMS] = {NumAR(1, "I"),
+                     NumAR(4, "IV"),
+                     NumAR(5, "V"),
+                     NumAR(9, "IX"),
+                     NumAR(10, "X"),
+                     NumAR(40, "XL"),
+                     NumAR(50, "L"),
+                     NumAR(90, "XC"),
+                     NumAR(100, "C"),
+                     NumAR(400, "CD"),
+                     NumAR(500, "D"),
+                     NumAR(900, "CM"),
+                     NumAR(1000, "M")};
+
   while (counter--)
   {
-    while (arabic_number >= a_num[counter]) {
-      arabic_number -= a_num[counter];
-      strcat(roman_num, r_str[counter]);
+    while (arabic_number >= dict[counter].a_num) {
+      arabic_number -= dict[counter].a_num;
+      roman_num.append(dict[counter].r_str);
     }
   }
   return true;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------------
+///---------------------------------------------------------------------------------
 
-#define ILL_TERMINATOR       "ill"
-#define AMB_TERMINATOR       "amb"
-#define ERR_TERMINATOR       "err"
-#define UNDEF_DIGIT          -1
-#define ILL_SYMBOL           '?'
-#define MAGIC_CHECKSUM_CONST 11
+enum class CodeCheckStatus {
+    CORRECT,    // check-sum is correct
+    INCORRECT,  // check-sum is NOT correct
+};
+enum class CodeDictStatus {
+    FOUND,      // all symbols found in the dict
+    MISSING,    // some symbols are incorrect (it not found in the dict)
+};
 
-#define DIGIT_W 3
-#define DIGIT_H 4
-#define DIGIT_N 9
-#define LINE_N (DIGIT_N * DIGIT_W)
+static const unordered_map<sdigit_t, short> symbolDigitDict = {
+    {" _ "
+     "| |"
+     "|_|"
+     "   ", 0},
+    {"   "
+     "  |"
+     "  |"
+     "   ", 1},
+    {" _ "
+     " _|"
+     "|_ "
+     "   ", 2},
+    {" _ "
+     " _|"
+     " _|"
+     "   ", 3},
+    {"   "
+     "|_|"
+     "  |"
+     "   ", 4},
+    {" _ "
+     "|_ "
+     " _|"
+     "   ", 5},
+    {" _ "
+     "|_ "
+     "|_|"
+     "   ", 6},
+    {" _ "
+     "  |"
+     "  |"
+     "   ", 7},
+    {" _ "
+     "|_|"
+     "|_|"
+     "   ", 8},
+    {" _ "
+     "|_|"
+     " _|"
+     "   ", 9}
+};
 
-
-bool calculate_checksum(vector<int> code)
+void cleanStringArray(scode_t& symbolCode)
 {
-    const int codeSize = code.size();
-    int checksum = 0;
-    for (int i = 0; i<codeSize; i++){
-        checksum += (codeSize - i) * code[i];
-    }
-    return checksum % MAGIC_CHECKSUM_CONST == 0 ? true : false;
+    for_each(symbolCode.begin(), symbolCode.end(), [](sdigit_t& s){ s = "" ;});
 }
 
-bool hasSimular(const string& original, const string& verifiable)
-{
-    static const char BLANK = ' ';
-    if (original.size() != verifiable.size()) return false;
-    bool hasDiff = false;
-    for (size_t i = 0; i < original.size(); ++i) {
-        if (original[i] != verifiable[i]) {
-            if (verifiable[i] != BLANK) return false;
-            if (hasDiff) return false;
-            hasDiff = true;
-        }
-    }
-    return true;
-}
-
-std::vector<string> getSimular(const std::vector<string>& originals, const string& pattern)
-{
-    std::vector<string> simular;
-    for (auto & original : originals) {
-        if(hasSimular(original, pattern)) {
-            simular.push_back(original);
-        }
-    }
-    return simular;
-}
-
-void printCode(ostream &output, const vector<int>& code)
-{
-    for_each(code.begin(), code.end(), [&output](const int& d) {
-        output << d;
-    });
-    if (!calculate_checksum(code)){
-        output << " " << ERR_TERMINATOR;
-    }
-}
-
-void printIllCode(ostream &output, const vector<int>& code)
-{
-    for_each(code.begin(), code.end(), [&output](const int& d) {
-        if (d == UNDEF_DIGIT) output << ILL_SYMBOL;
-        else output << d;
-    });
-    output << " " << ILL_TERMINATOR;
-}
-
-void printAmbCode(ostream &output, const vector<int>& code, const vector<int>& predictionCode)
-{
-    for(auto predictionDigit : predictionCode){
-        vector<int> healthyCode;
-        for (auto digit : code){
-            auto healthyDigit = (digit == UNDEF_DIGIT ? predictionDigit : digit);
-            healthyCode.push_back(healthyDigit);
-        }
-        printCode(output, healthyCode);
-        output << " ";
-    }
-    output << AMB_TERMINATOR;
-}
-
-void putSeparatedLineInArray(array<string,DIGIT_N>& line_digits, const string& line)
+void putSeparatedLineInArray(scode_t& line_digits, const string& line)
 {
     for (size_t i = 0; i < DIGIT_N; ++i) {
         line_digits[i] += line.substr(i*DIGIT_W, DIGIT_W);
     }
 }
 
-void cleanStringArray(array<string,DIGIT_N>& line_digits)
+CodeCheckStatus getCheckCodeStatus(const scode_t& symbolCode)
 {
-    for_each(line_digits.begin(), line_digits.end(), [](string& s){ s = "" ;});
+    const size_t codeN = symbolCode.size();
+    int checksum(0), idx(0);
+    for (const auto& symbolDigit : symbolCode){
+        if(has_in_the_dict(symbolDigitDict, symbolDigit)){
+            checksum += (codeN - idx) * symbolDigitDict.at(symbolDigit);
+            ++idx;
+        } else {
+            return CodeCheckStatus::INCORRECT;
+        }
+    }
+    return (checksum % MAGIC_CHECKSUM_CONST == 0)
+            ? CodeCheckStatus::CORRECT : CodeCheckStatus::INCORRECT;
 }
 
-
-int convert_asciidigit_to_arabic(istream &input, ostream &output)
+CodeDictStatus getCodeDictStatus(const scode_t& symbolCode)
 {
-    static const map<string, short> dict = {
-        {" _ "
-         "| |"
-         "|_|"
-         "   ", 0},
-        {"   "
-         "  |"
-         "  |"
-         "   ", 1},
-        {" _ "
-         " _|"
-         "|_ "
-         "   ", 2},
-        {" _ "
-         " _|"
-         " _|"
-         "   ", 3},
-        {"   "
-         "|_|"
-         "  |"
-         "   ", 4},
-        {" _ "
-         "|_ "
-         " _|"
-         "   ", 5},
-        {" _ "
-         "|_ "
-         "|_|"
-         "   ", 6},
-        {" _ "
-         "  |"
-         "  |"
-         "   ", 7},
-        {" _ "
-         "|_|"
-         "|_|"
-         "   ", 8},
-        {" _ "
-         "|_|"
-         " _|"
-         "   ", 9}
-    };
-    vector<string> vdict;
-    for (auto d : dict) vdict.push_back(d.first);
-    int currentLine(0);
-    string line;
-    array<string,DIGIT_N> line_digits;
-    bool isIll = false;
-    bool isDigitMissingInDict = false;
+    auto nCorrectDigit = count_if(symbolCode.begin(), symbolCode.end(),
+                                  [](const sdigit_t& sdigit) { return has_in_the_dict(symbolDigitDict, sdigit); }
+    );
 
-    while(std::getline(input, line)) {
-        if (input.eof() || line.size() != LINE_N) return false;
+    if (static_cast<size_t>(nCorrectDigit) == symbolCode.size()){
+        return CodeDictStatus::FOUND;
+    } else {
+        return CodeDictStatus::MISSING;
+    }
+}
 
-        putSeparatedLineInArray(line_digits, line);
+ostream& operator<<(ostream& out, const scode_t& symbolCode)
+{
+    for (const sdigit_t& symbolDigit : symbolCode) {
+        if(has_in_the_dict(symbolDigitDict, symbolDigit)) {
+            out << symbolDigitDict.at(symbolDigit);
+        } else {
+            out << ILL_SYMBOL;
+        }
+    }
+    return out;
+}
 
-        if (++currentLine == DIGIT_H) {
-            currentLine = 0;
-            vector<int> code;
-            vector<int> predictionCode;
-            for(const auto& digit : line_digits){
-                if (!has_in_the_dict<string, short>(dict, digit)) {
-                    for(auto predictionDigit : getSimular(vdict, digit)){
-                        int idigit = dict.at(predictionDigit);
-                        predictionCode.push_back(idigit);
-                    }
-                    if (isDigitMissingInDict || predictionCode.empty()) {
-                        isIll = true;
-                    }
-                    isDigitMissingInDict = true;
-                    code.push_back(UNDEF_DIGIT);
-                } else {
-                    code.push_back(dict.at(digit)); 
-                }
-            }
-            if (isIll){
-                printIllCode(output, code);
-            } else if (predictionCode.empty()){
-                printCode(output, code);
-            } else {
-                printAmbCode(output, code, predictionCode);
-            }
-            output << endl;
+ostream& operator<<(ostream& out, const std::vector<scode_t>& symbolCodes)
+{
 
-            cleanStringArray(line_digits);
-            isIll = false;
-            isDigitMissingInDict = false;
+    for(auto it = symbolCodes.begin(); it != symbolCodes.end();) {
+        out << *it;
+        if (++it != symbolCodes.end()) {
+            out << BLANK_SYMBOL;
+        }
+    }
+    return out;
+}
+
+bool hasSimularDigit(const sdigit_t& sourceSDigit, const sdigit_t& verifiableSDigit)
+{
+    if(sourceSDigit.size() != verifiableSDigit.size()) return false;
+    bool hasDiff = false;
+    for(size_t i = 0; i < sourceSDigit.size(); ++i) {
+        if(sourceSDigit[i] != verifiableSDigit[i]) {
+            if(verifiableSDigit[i] != BLANK_SYMBOL) return false;
+            if(hasDiff) return false;
+            hasDiff = true;
         }
     }
     return true;
 }
+
+std::vector<sdigit_t> getSimilarDigits(const sdigit_t& patternSCode)
+{
+    static vector<sdigit_t> sourceSymbolCodes;
+    if (sourceSymbolCodes.empty()) {
+        for (auto d : symbolDigitDict) sourceSymbolCodes.push_back(d.first);
+    }
+    ///
+    std::vector<sdigit_t> similarDigits;
+
+    copy_if(sourceSymbolCodes.begin(), sourceSymbolCodes.end(),
+            back_inserter(similarDigits),
+            [&patternSCode](const sdigit_t& sourceSymbolCode) {
+                return hasSimularDigit(sourceSymbolCode, patternSCode);
+            }
+    );
+    return similarDigits;
+}
+
+vector<scode_t> restoreCode(const scode_t& badCode)
+{    
+    vector<scode_t> restoredCodes;
+    for(size_t i = 0; i < badCode.size(); ++i) {
+        for(const auto& digit : getSimilarDigits(badCode[i])) {
+            auto tmpCode = badCode;
+            tmpCode[i] = digit; // <- attempt to make correct code
+            if(getCheckCodeStatus(tmpCode) == CodeCheckStatus::CORRECT) {
+                restoredCodes.push_back(tmpCode);
+            }
+        }
+    }
+    return restoredCodes;
+}
+
+int convert_asciidigit_to_arabic(istream &input, ostream &output)
+{
+    int currentLine(0);
+    string line;
+    scode_t symbolCode;
+
+    while(std::getline(input, line)) {
+        if (input.eof()) return false;
+
+        putSeparatedLineInArray(symbolCode, line);
+
+        // all lines were read for one symbolCode
+        if (++currentLine == DIGIT_H) {
+            currentLine = 0;
+
+            switch (getCheckCodeStatus(symbolCode)) {
+            case CodeCheckStatus::CORRECT : {
+                output << symbolCode;
+            } break;
+            case CodeCheckStatus::INCORRECT : {
+                auto restoredCodes = restoreCode(symbolCode);
+                // the code is restored uniquely
+                if (restoredCodes.size() == 1) {
+                    output << restoredCodes.front();
+                }
+                // the code is restored ambiguously
+                else if (restoredCodes.size() > 1) {
+                    output << restoredCodes << AMB_TERMINATOR;
+                }
+                // the code is not restored
+                else {
+                    switch (getCodeDictStatus(symbolCode)) {
+                    case CodeDictStatus::MISSING : {
+                        output << symbolCode << ILL_TERMINATOR;
+                    } break;
+                    case CodeDictStatus::FOUND : {
+                        output << symbolCode << ERR_TERMINATOR;
+                    } break;
+                    }
+                }
+            } break;
+            }
+            output << endl;
+            cleanStringArray(symbolCode);
+        }
+    }
+    return true;
+}
+

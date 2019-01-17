@@ -1,7 +1,7 @@
 QT -= gui
 QT += core
 
-CONFIG += c++14 console
+CONFIG += c++11 console c++0x-compat
 CONFIG -= app_bundle
 
 # The following define makes your compiler emit warnings if you use
@@ -26,4 +26,5 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 HEADERS += \
     artoConverter.h \
-    streamHelper.h
+    streamHelper.h \
+    artoconverter_constantstypes.h

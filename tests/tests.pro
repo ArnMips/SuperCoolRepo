@@ -11,7 +11,8 @@ HEADERS += \
     tst_arabictoroman.h \
     tst_romantoarabic.h \
     tst.h \
-    tst_asciitoint.h
+    tst_asciitoint.h \
+    tst_asciitoint_technological.h
 
 SOURCES += \
         main.cpp \
